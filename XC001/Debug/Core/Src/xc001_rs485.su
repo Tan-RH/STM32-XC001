@@ -1,0 +1,5 @@
+../Core/Src/xc001_rs485.c:15:6:XC001_RS485_Init	8	static
+../Core/Src/xc001_rs485.c:21:6:XC001_RS485_Task	16	static
+../Core/Src/xc001_rs485.c:43:9:XC001_RS485_SendText	24	static
+../Core/Src/xc001_rs485.c:63:6:XC001_RS485_Status	24	static
+../Core/Src/xc001_rs485.c:68:6:XC001_RS485_LastRx	16	static

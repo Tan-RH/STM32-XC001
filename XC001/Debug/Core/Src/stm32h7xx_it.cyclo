@@ -1,0 +1,12 @@
+../Core/Src/stm32h7xx_it.c:59:13:fault_uart_write	3
+../Core/Src/stm32h7xx_it.c:75:13:fault_uart_hex	2
+../Core/Src/stm32h7xx_it.c:93:13:fault_dump	2
+../Core/Src/stm32h7xx_it.c:129:6:NMI_Handler	1
+../Core/Src/stm32h7xx_it.c:144:6:HardFault_Handler	1
+../Core/Src/stm32h7xx_it.c:160:6:MemManage_Handler	1
+../Core/Src/stm32h7xx_it.c:176:6:BusFault_Handler	1
+../Core/Src/stm32h7xx_it.c:192:6:UsageFault_Handler	1
+../Core/Src/stm32h7xx_it.c:208:6:DebugMon_Handler	1
+../Core/Src/stm32h7xx_it.c:221:6:SysTick_Handler	2
+../Core/Src/stm32h7xx_it.c:252:6:ETH_IRQHandler	1
+../Core/Src/stm32h7xx_it.c:257:6:UART7_IRQHandler	1

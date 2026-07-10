@@ -1,0 +1,4 @@
+../Core/Src/xc001_storage.c:24:17:checksum32	24	static
+../Core/Src/xc001_storage.c:36:9:XC001_Storage_Load	32	static
+../Core/Src/xc001_storage.c:58:9:XC001_Storage_Save	112	static
+../Core/Src/xc001_storage.c:90:9:XC001_Storage_Reset	40	static

@@ -1,0 +1,17 @@
+../Core/Src/xc001_net.c:35:16:query_value	176	static
+../Core/Src/xc001_net.c:70:16:http_send_all	40	static
+../Core/Src/xc001_net.c:100:13:send_response	200	static
+../Core/Src/xc001_net.c:114:13:send_error	184	static
+../Core/Src/xc001_net.c:128:13:send_no_content	16	static
+../Core/Src/xc001_net.c:134:13:send_index_page	112	static
+../Core/Src/xc001_net.c:173:13:http_recv_rest	48	static
+../Core/Src/xc001_net.c:218:9:XC001_Net_ApplyConfig	32	static
+../Core/Src/xc001_net.c:233:13:udp_thread	728	static
+../Core/Src/xc001_net.c:280:13:handle_http	1088	static
+../Core/Src/xc001_net.c:371:13:http_thread	1112	static
+../Core/Src/xc001_net.c:447:6:XC001_Net_Init	8	static
+../Core/Src/xc001_net.c:455:6:XC001_Net_StartServices	80	static
+../Core/Src/xc001_net.c:478:6:XC001_Net_RequestStartServices	4	static
+../Core/Src/xc001_net.c:486:6:XC001_Net_Task	8	static
+../Core/Src/xc001_net.c:495:6:XC001_Net_Diag	168	static
+../Core/Src/xc001_net.c:518:6:XC001_Net_PhyDiag	112	static

@@ -1,0 +1,8 @@
+../Core/Src/xc001_utils.c:7:7:XC001_Trim	24	static
+../Core/Src/xc001_utils.c:28:5:XC001_StrCaseCmp	32	static
+../Core/Src/xc001_utils.c:42:5:XC001_StrNCaseCmp	40	static
+../Core/Src/xc001_utils.c:56:13:XC001_SkipSpace	16	static
+../Core/Src/xc001_utils.c:65:9:XC001_ParseU16	24	static
+../Core/Src/xc001_utils.c:84:9:XC001_ParseHexBytes	40	static
+../Core/Src/xc001_utils.c:133:6:XC001_FormatHexBytes	56	static
+../Core/Src/xc001_utils.c:154:9:XC001_UrlDecode	32	static

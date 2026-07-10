@@ -1,0 +1,13 @@
+../Core/Src/xc001_console.c:23:13:console_start_rx_it	2
+../Core/Src/xc001_console.c:37:13:console_write	2
+../Core/Src/xc001_console.c:45:13:console_print_prompt	1
+../Core/Src/xc001_console.c:50:13:console_recover_uart	2
+../Core/Src/xc001_console.c:65:13:console_print_status	2
+../Core/Src/xc001_console.c:92:6:XC001_Console_Init	3
+../Core/Src/xc001_console.c:119:6:XC001_Console_WriteRaw	1
+../Core/Src/xc001_console.c:124:6:XC001_Console_UartRxCpltCallback	3
+../Core/Src/xc001_console.c:145:6:XC001_Console_UartErrorCallback	2
+../Core/Src/xc001_console.c:154:6:HAL_UART_RxCpltCallback	1
+../Core/Src/xc001_console.c:159:6:HAL_UART_ErrorCallback	1
+../Core/Src/xc001_console.c:164:13:console_execute_line	2
+../Core/Src/xc001_console.c:182:6:XC001_Console_Task	12

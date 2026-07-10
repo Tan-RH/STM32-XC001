@@ -1,0 +1,3 @@
+../Core/Src/xc001_scpi.c:16:6:XC001_SCPI_Init	1
+../Core/Src/xc001_scpi.c:20:13:reply_net_config	1
+../Core/Src/xc001_scpi.c:31:6:XC001_SCPI_Execute	63

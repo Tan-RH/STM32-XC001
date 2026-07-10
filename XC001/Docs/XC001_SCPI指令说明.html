@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>XC001 SCPI 指令说明</title>
+<style>
+@page { size: A4; margin: 14mm 12mm 16mm; }
+body { font-family: "Microsoft YaHei", "Noto Sans SC", Arial, sans-serif; color:#1b2630; line-height:1.55; font-size:13px; }
+h2 { color:#142536; font-size:22px; margin:18px 0 10px; border-bottom:2px solid #d9e1ea; padding-bottom:5px; break-after:avoid; }
+h3 { color:#1f3a54; font-size:16px; margin:14px 0 8px; break-after:avoid; }
+p { margin: 7px 0; }
+.logo-line { margin: 4px 0 12px; }
+.doc-logo { width: 150px; height: auto; display: block; }
+hr { border:0; border-top:1px solid #d9e1ea; margin:12px 0; }
+table { width:100%; border-collapse:collapse; margin:8px 0 14px; break-inside:auto; }
+tr { break-inside:avoid; break-after:auto; }
+th { background:#142536; color:white; font-weight:600; }
+th,td { border:1px solid #bfc8d2; padding:6px 7px; vertical-align:top; word-break:break-word; }
+code { font-family: Consolas, "Microsoft YaHei", monospace; background:#eef2f5; padding:1px 4px; border-radius:3px; }
+pre { background:#101820; color:#dff3ff; padding:10px 12px; border-radius:6px; white-space:pre-wrap; break-inside:avoid; }
+pre code { background:transparent; color:inherit; padding:0; }
+blockquote { margin:8px 0; padding:7px 10px; border-left:4px solid #0f62a8; background:#f2f6fa; color:#4b5563; }
+ol { padding-left:24px; }
+</style>
+</head>
+<body>
+<h2>XC001 控制板 SCPI 指令说明</h2>
+<p class="logo-line"><img class="doc-logo" src="file:///E:/STM32/XC001/Docs/%E5%85%AC%E5%8F%B8logo.png" alt="GeneralTest Logo"></p>
+<hr>
+<h2>设备信息</h2>
+<table><thead><tr><th>项目</th><th>说明</th></tr></thead><tbody>
+<tr><td>制造商</td><td>GeneralTest</td></tr>
+<tr><td>型号</td><td>XC001 CONTROL-BOARD</td></tr>
+<tr><td>MCU</td><td>STM32H743</td></tr>
+<tr><td>固件版本</td><td>V1.0</td></tr>
+<tr><td>默认 IP</td><td>192.168.1.10</td></tr>
+<tr><td>默认 UDP 端口</td><td>4000</td></tr>
+<tr><td>HTTP 端口</td><td>80</td></tr>
+</tbody></table>
+<h2>通信方式</h2>
+<table><thead><tr><th>接口</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td>UART7 控制台</td><td>115200, 8N1</td><td>Type-C 调试串口，发送 SCPI 文本指令并接收文本返回</td></tr>
+<tr><td>UDP SCPI</td><td>默认端口 <code>4000</code></td><td>向板卡 IP 的 UDP 端口发送 SCPI 文本指令</td></tr>
+<tr><td>Web 页面</td><td><code>http://&lt;板卡IP&gt;/</code></td><td>网页内可发送 SCPI 指令，也可配置网络参数</td></tr>
+</tbody></table>
+<blockquote>默认网络参数：IP <code>192.168.1.10</code>，子网掩码 <code>255.255.255.0</code>，网关 <code>192.168.1.1</code>。</blockquote>
+<blockquote>网页或 SCPI 修改 IP、子网掩码、网关、UDP 端口后会保存到 Flash，重新上电/重启后生效。</blockquote>
+<h2>基础指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>*IDN?</code></td><td></td><td>查询设备身份信息</td></tr>
+<tr><td><code>IDN?</code></td><td></td><td>兼容形式，等同于 <code>*IDN?</code></td></tr>
+<tr><td><code>PING?</code></td><td></td><td>通信链路测试</td></tr>
+<tr><td><code>*CLS</code></td><td></td><td>清除当前状态/错误标志</td></tr>
+<tr><td><code>*RST</code></td><td></td><td>重新初始化板级业务 IO</td></tr>
+<tr><td><code>STAT?</code></td><td></td><td>查询网络、CAN、RS485、SPI 综合状态</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>*IDN?      # 查询设备身份
+PING?      # 通信测试
+STAT?      # 查询综合状态
+*RST       # 重新初始化业务 IO</code></pre>
+<h3>返回示例</h3>
+<pre><code>XC001,CONTROL-BOARD,H743,V1.0
+PONG
+OK</code></pre>
+<h2>系统指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>SYST:ERR?</code></td><td></td><td>查询系统错误状态</td></tr>
+<tr><td><code>SYST:HELP?</code></td><td></td><td>查询当前固件支持的 SCPI 指令列表</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>SYST:ERR?     # 查询系统错误
+SYST:HELP?    # 查询支持的指令</code></pre>
+<h3>系统错误返回值</h3>
+<table><thead><tr><th>返回值</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>0,"No error"</code></td><td>当前无错误</td></tr>
+<tr><td><code>ERR,-100,"Empty command"</code></td><td>空指令</td></tr>
+<tr><td><code>ERR,-109,"Missing parameter"</code></td><td>缺少参数</td></tr>
+<tr><td><code>ERR,-113,"Undefined header"</code></td><td>未知指令</td></tr>
+<tr><td><code>ERR,-222,"Invalid ..."</code></td><td>参数非法或操作失败</td></tr>
+<tr><td><code>ERR,-224,"Unknown GPIO"</code></td><td>未知 GPIO 名称</td></tr>
+</tbody></table>
+<h2>网络配置指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>NET:STAT?</code></td><td></td><td>查询当前运行中的网络配置</td></tr>
+<tr><td><code>NET:DIAG?</code></td><td></td><td>查询网络、PHY、HTTP、DMA 诊断状态</td></tr>
+<tr><td><code>ND?</code></td><td></td><td><code>NET:DIAG?</code> 快捷别名</td></tr>
+<tr><td><code>NET:PHY?</code></td><td></td><td>查询以太网 PHY 寄存器和链路状态</td></tr>
+<tr><td><code>NET:MAC?</code></td><td></td><td>查询当前 MAC 地址</td></tr>
+<tr><td><code>NET:SERV ON</code></td><td></td><td>请求启动 HTTP/UDP 网络服务；当前固件默认上电自动启动</td></tr>
+<tr><td><code>NET:IP?</code></td><td></td><td>查询当前运行 IP 地址</td></tr>
+<tr><td><code>NET:IP</code></td><td><code>a.b.c.d</code></td><td>设置 IP 地址并保存到 Flash，重启后生效</td></tr>
+<tr><td><code>NET:MASK?</code></td><td></td><td>查询当前运行子网掩码</td></tr>
+<tr><td><code>NET:MASK</code></td><td><code>a.b.c.d</code></td><td>设置子网掩码并保存到 Flash，重启后生效</td></tr>
+<tr><td><code>NET:GATE?</code></td><td></td><td>查询当前运行网关</td></tr>
+<tr><td><code>NET:GATE</code></td><td><code>a.b.c.d</code></td><td>设置网关并保存到 Flash，重启后生效</td></tr>
+<tr><td><code>NET:PORT?</code></td><td></td><td>查询 UDP SCPI 端口</td></tr>
+<tr><td><code>NET:PORT</code></td><td><code>1~65535</code></td><td>设置 UDP SCPI 端口并保存到 Flash，重启后生效</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>NET:STAT?                  # 查询网络配置
+NET:DIAG?                  # 查询网络诊断
+ND?                        # 快捷查询网络诊断
+NET:PHY?                   # 查询 PHY 状态
+NET:IP?                    # 查询 IP
+NET:IP 192.168.1.20        # 设置 IP，重启后生效
+NET:MASK 255.255.255.0     # 设置子网掩码，重启后生效
+NET:GATE 192.168.1.1       # 设置网关，重启后生效
+NET:PORT 4000              # 设置 UDP 端口，重启后生效</code></pre>
+<h3>返回示例</h3>
+<pre><code>IP=192.168.1.10,GW=192.168.1.1,MASK=255.255.255.0,UDP=4000,HTTP=80
+OK,SAVED,REBOOT_REQUIRED
+NET:IP=192.168.1.10,UP=1,LINK=1,HTTP=1,HTTP_ACC=2,HTTP_REQ=2,...
+PHY:INIT=1,ADDR=0,LINK=...</code></pre>
+<h3>网络参数恢复</h3>
+<table><thead><tr><th>信号</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>ETH_NRST</code> / <code>PE15</code></td><td>低电平有效。上电时保持低电平会清除 Flash 中的网络配置并恢复默认 IP、子网掩码、网关和端口。</td></tr>
+</tbody></table>
+<h2>数字 IO 指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>DIG:LIST?</code></td><td></td><td>列出固件识别的 GPIO 名称</td></tr>
+<tr><td><code>DIG:OUTP</code></td><td><code>pin,val</code></td><td>设置指定 IO 输出。<code>val=0</code> 输出低电平，<code>val=1</code> 输出高电平，<code>val=T</code> 翻转</td></tr>
+<tr><td><code>DIG:OUTP?</code></td><td><code>pin</code></td><td>读取指定 IO 当前电平</td></tr>
+</tbody></table>
+<h3>支持的 GPIO 名称</h3>
+<table><thead><tr><th>名称</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>PE3</code> / <code>PE4</code> / <code>PE5</code> / <code>PE6</code></td><td>扩展 IO，默认低电平</td></tr>
+<tr><td><code>PC8</code> / <code>PC9</code> / <code>PC10</code> / <code>PC11</code> / <code>PC12</code> / <code>PC13</code></td><td>扩展 IO，默认低电平</td></tr>
+<tr><td><code>PA8</code> / <code>PA9</code> / <code>PD2</code></td><td>扩展 IO，默认低电平</td></tr>
+<tr><td><code>LED1</code></td><td>PB1，运行状态指示灯</td></tr>
+<tr><td><code>LED2</code></td><td>PB2，错误状态指示灯，高电平熄灭，低电平点亮</td></tr>
+<tr><td><code>ETH_NRST</code></td><td>PE15，以太网复位/网络恢复输入，不允许通过 <code>DIG:OUTP</code> 写入</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>DIG:LIST?           # 查询 GPIO 名称列表
+DIG:OUTP PE4,1      # PE4 输出高电平
+DIG:OUTP PE4,0      # PE4 输出低电平
+DIG:OUTP PE4,T      # PE4 翻转
+DIG:OUTP? PE4       # 查询 PE4 当前电平</code></pre>
+<h3>返回示例</h3>
+<pre><code>PE3,PE4,PE5,PE6,PC8,PC9,PC10,PC11,PC12,PC13,PA8,PA9,PD2,LED1,LED2,ETH_NRST
+OK
+0
+1</code></pre>
+<h2>CAN 指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>CAN:STAT?</code></td><td></td><td>查询 FDCAN1 初始化状态、发送计数和接收计数</td></tr>
+<tr><td><code>CAN:SEND</code></td><td><code>id,hex</code></td><td>发送 CAN 数据帧。<code>id</code> 支持十进制或 <code>0x</code> 前缀，<code>hex</code> 为 0~8 字节十六进制数据</td></tr>
+<tr><td><code>CAN:RX?</code></td><td></td><td>查询最近一次收到的 CAN 帧</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>CAN:STAT?                  # 查询 CAN 状态
+CAN:SEND 0x123,11223344    # 发送 CAN 帧
+CAN:RX?                    # 查询最近一次接收帧</code></pre>
+<h3>返回示例</h3>
+<pre><code>CAN1:READY=1,TX=1,RX=0
+OK
+ID=0x123,LEN=4,DATA=11223344
+EMPTY</code></pre>
+<h2>RS485 指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>RS485:STAT?</code></td><td></td><td>查询 RS485 发送/接收计数</td></tr>
+<tr><td><code>RS485:SEND</code></td><td><code>text</code></td><td>通过 RS485 发送文本，固件自动追加 CRLF</td></tr>
+<tr><td><code>RS485:RX?</code></td><td></td><td>查询最近一次 RS485 接收文本</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>RS485:STAT?             # 查询 RS485 状态
+RS485:SEND hello        # 发送文本
+RS485:RX?               # 查询最近一次接收文本</code></pre>
+<h3>返回示例</h3>
+<pre><code>RS485:TX=1,RX=0
+OK
+EMPTY</code></pre>
+<h2>SPI 指令</h2>
+<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>SPI:STAT?</code></td><td></td><td>查询 SPI5 初始化状态和传输计数</td></tr>
+<tr><td><code>SPI:TRAN?</code></td><td><code>hex</code></td><td>通过 SPI5 发送十六进制数据，并返回同步接收数据</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>SPI:STAT?            # 查询 SPI 状态
+SPI:TRAN? 9F0000     # 发送 3 字节并读取返回</code></pre>
+<h3>返回示例</h3>
+<pre><code>SPI5:READY=1,COUNT=0
+FFFFFF</code></pre>
+<h2>Web HTTP 接口</h2>
+<table><thead><tr><th>接口</th><th>方法</th><th>说明</th></tr></thead><tbody>
+<tr><td><code>/</code></td><td>GET</td><td>打开 XC001 网页控制台</td></tr>
+<tr><td><code>/api/cmd</code></td><td>POST</td><td>请求体为 SCPI 指令文本，返回 SCPI 文本响应</td></tr>
+<tr><td><code>/api/config</code></td><td>GET</td><td>无参数时读取当前运行网络配置</td></tr>
+<tr><td><code>/api/config?ip=&lt;ip&gt;&amp;mask=&lt;mask&gt;&amp;gw=&lt;gw&gt;&amp;port=&lt;port&gt;&amp;pwd=&lt;pwd&gt;</code></td><td>GET</td><td>保存网络参数到 Flash，默认密码为 <code>admin</code>，重启后生效</td></tr>
+</tbody></table>
+<h3>示例</h3>
+<pre><code>POST /api/cmd
+
+*IDN?</code></pre>
+<pre><code>GET /api/config?ip=192.168.1.20&amp;mask=255.255.255.0&amp;gw=192.168.1.1&amp;port=4000&amp;pwd=admin</code></pre>
+<h2>指示灯状态</h2>
+<table><thead><tr><th>引脚</th><th>状态</th><th>说明</th></tr></thead><tbody>
+<tr><td>PB1 / LED1</td><td>周期闪烁</td><td>运行状态指示灯。闪烁周期由 <code>XC001_STATUS_BLINK_MS</code> 配置。</td></tr>
+<tr><td>PB2 / LED2</td><td>高电平熄灭，低电平点亮</td><td>错误状态指示灯。正常状态保持高电平熄灭。</td></tr>
+</tbody></table>
+<h2>注意事项</h2>
+<p>1. SCPI 指令大小写不敏感。</p>
+<p>2. 串口指令建议以回车或换行结束。</p>
+<p>3. 网页和 UDP 通道均调用同一套 SCPI 解析逻辑。</p>
+<p>4. 修改网络参数后，当前运行网络不会立即切换；请重新上电或复位后使用新地址访问。</p>
+<p>5. 设置类指令若参数非法，通常返回 <code>ERR,-222,"Invalid ..."</code>。</p>
+</body>
+</html>

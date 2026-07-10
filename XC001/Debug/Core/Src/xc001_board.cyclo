@@ -1,0 +1,10 @@
+../Core/Src/xc001_board.c:32:13:eth_nrst_as_output	1
+../Core/Src/xc001_board.c:44:6:XC001_Board_Init	1
+../Core/Src/xc001_board.c:56:6:XC001_Board_Task	2
+../Core/Src/xc001_board.c:69:6:XC001_Board_SetStatusOk	2
+../Core/Src/xc001_board.c:74:9:XC001_Board_IsEthResetPressed	2
+../Core/Src/xc001_board.c:90:6:XC001_Board_PhyResetPulse	1
+../Core/Src/xc001_board.c:99:23:XC001_Board_FindGpio	3
+../Core/Src/xc001_board.c:111:9:XC001_Board_WriteGpio	4
+../Core/Src/xc001_board.c:130:9:XC001_Board_ReadGpio	4
+../Core/Src/xc001_board.c:142:6:XC001_Board_GpioList	7
