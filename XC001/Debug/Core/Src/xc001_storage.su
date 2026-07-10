@@ -1,4 +1,12 @@
-../Core/Src/xc001_storage.c:24:17:checksum32	24	static
-../Core/Src/xc001_storage.c:36:9:XC001_Storage_Load	32	static
-../Core/Src/xc001_storage.c:58:9:XC001_Storage_Save	112	static
-../Core/Src/xc001_storage.c:90:9:XC001_Storage_Reset	40	static
+../Core/Src/xc001_storage.c:48:17:checksum32	24	static
+../Core/Src/xc001_storage.c:60:16:lock_storage	8	static
+../Core/Src/xc001_storage.c:65:13:unlock_storage	8	static
+../Core/Src/xc001_storage.c:73:16:record_is_erased	24	static
+../Core/Src/xc001_storage.c:87:16:record_is_valid	24	static
+../Core/Src/xc001_storage.c:102:16:legacy_is_valid	16	static
+../Core/Src/xc001_storage.c:113:13:scan_records	32	static
+../Core/Src/xc001_storage.c:135:26:erase_storage_sector	40	static
+../Core/Src/xc001_storage.c:148:6:XC001_Storage_Init	24	static
+../Core/Src/xc001_storage.c:161:9:XC001_Storage_Load	40	static
+../Core/Src/xc001_storage.c:187:9:XC001_Storage_Save	120	static,ignoring_inline_asm
+../Core/Src/xc001_storage.c:253:9:XC001_Storage_Reset	56	static,ignoring_inline_asm

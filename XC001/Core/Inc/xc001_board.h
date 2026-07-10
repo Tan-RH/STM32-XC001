@@ -16,6 +16,9 @@ typedef struct
 void XC001_Board_Init(void);
 void XC001_Board_Task(void);
 void XC001_Board_SetStatusOk(uint8_t ok);
+void XC001_Board_WatchdogInit(void);
+void XC001_Board_WatchdogRefresh(void);
+uint32_t XC001_Board_GetAndClearResetFlags(void);
 uint8_t XC001_Board_IsEthResetPressed(void);
 void XC001_Board_PhyResetPulse(void);
 const XC001_GpioItem *XC001_Board_FindGpio(const char *name);

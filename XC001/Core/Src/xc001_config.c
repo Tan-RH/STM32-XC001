@@ -1,5 +1,7 @@
 #include "xc001_config.h"
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 XC001_NetworkConfig XC001_NetConfig;
 
@@ -14,6 +16,19 @@ static uint8_t is_valid_host_ip(const uint8_t ip[4])
     return 0U;
   }
   return 1U;
+}
+
+static uint32_t ip_to_u32(const uint8_t ip[4])
+{
+  return ((uint32_t)ip[0] << 24) |
+         ((uint32_t)ip[1] << 16) |
+         ((uint32_t)ip[2] << 8) |
+         (uint32_t)ip[3];
+}
+
+static uint8_t is_zero_ip(const uint8_t ip[4])
+{
+  return (ip == 0 || (ip[0] == 0U && ip[1] == 0U && ip[2] == 0U && ip[3] == 0U)) ? 1U : 0U;
 }
 
 static uint8_t is_valid_netmask(const uint8_t mask[4])
@@ -72,11 +87,7 @@ uint8_t XC001_Config_SetNetwork(const uint8_t ip[4], uint16_t udp_port)
 
 uint8_t XC001_Config_SetNetworkFull(const uint8_t ip[4], const uint8_t netmask[4], const uint8_t gateway[4], uint16_t udp_port)
 {
-  if (ip == 0 || udp_port == 0U)
-  {
-    return 0U;
-  }
-  if (!is_valid_host_ip(ip) || !is_valid_netmask(netmask))
+  if (!XC001_Config_ValidateNetworkFull(ip, netmask, gateway, udp_port))
   {
     return 0U;
   }
@@ -91,27 +102,88 @@ uint8_t XC001_Config_SetNetworkFull(const uint8_t ip[4], const uint8_t netmask[4
   return 1U;
 }
 
+uint8_t XC001_Config_ValidateNetworkFull(const uint8_t ip[4], const uint8_t netmask[4], const uint8_t gateway[4], uint16_t udp_port)
+{
+  uint32_t ip_value;
+  uint32_t mask_value;
+  uint32_t host_part;
+
+  if (ip == 0 || netmask == 0 || udp_port == 0U ||
+      !is_valid_host_ip(ip) || !is_valid_netmask(netmask))
+  {
+    return 0U;
+  }
+
+  ip_value = ip_to_u32(ip);
+  mask_value = ip_to_u32(netmask);
+  host_part = ip_value & ~mask_value;
+  if (host_part == 0UL || host_part == (~mask_value))
+  {
+    return 0U;
+  }
+
+  if (!is_zero_ip(gateway))
+  {
+    uint32_t gateway_value;
+    if (!is_valid_host_ip(gateway))
+    {
+      return 0U;
+    }
+    gateway_value = ip_to_u32(gateway);
+    if ((gateway_value & mask_value) != (ip_value & mask_value))
+    {
+      return 0U;
+    }
+  }
+  return 1U;
+}
+
 uint8_t XC001_Config_ParseIp(const char *text, uint8_t ip[4])
 {
-  unsigned int a, b, c, d;
+  const char *p = text;
 
   if (text == 0 || ip == 0)
   {
     return 0U;
   }
-  if (sscanf(text, "%u.%u.%u.%u", &a, &b, &c, &d) != 4)
-  {
-    return 0U;
-  }
-  if (a > 255U || b > 255U || c > 255U || d > 255U)
-  {
-    return 0U;
-  }
 
-  ip[0] = (uint8_t)a;
-  ip[1] = (uint8_t)b;
-  ip[2] = (uint8_t)c;
-  ip[3] = (uint8_t)d;
+  while (isspace((unsigned char)*p))
+  {
+    p++;
+  }
+  for (uint8_t i = 0U; i < 4U; i++)
+  {
+    char *end;
+    unsigned long value;
+
+    if (!isdigit((unsigned char)*p))
+    {
+      return 0U;
+    }
+    value = strtoul(p, &end, 10);
+    if (end == p || value > 255UL)
+    {
+      return 0U;
+    }
+    ip[i] = (uint8_t)value;
+    p = end;
+    if (i < 3U)
+    {
+      if (*p != '.')
+      {
+        return 0U;
+      }
+      p++;
+    }
+  }
+  while (isspace((unsigned char)*p))
+  {
+    p++;
+  }
+  if (*p != '\0')
+  {
+    return 0U;
+  }
   return 1U;
 }
 

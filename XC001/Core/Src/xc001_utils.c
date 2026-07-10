@@ -81,6 +81,30 @@ uint8_t XC001_ParseU16(const char *s, uint16_t *value)
   return 1U;
 }
 
+uint8_t XC001_ParseU32(const char *s, uint32_t max_value, uint32_t *value)
+{
+  char *end;
+  unsigned long v;
+
+  if (s == 0 || value == 0)
+  {
+    return 0U;
+  }
+  s = XC001_SkipSpace(s);
+  if (*s == '\0' || *s == '-')
+  {
+    return 0U;
+  }
+  v = strtoul(s, &end, 0);
+  end = (char *)XC001_SkipSpace(end);
+  if (*end != '\0' || v > (unsigned long)max_value)
+  {
+    return 0U;
+  }
+  *value = (uint32_t)v;
+  return 1U;
+}
+
 uint8_t XC001_ParseHexBytes(const char *s, uint8_t *out, uint8_t max_len, uint8_t *out_len)
 {
   uint8_t len = 0U;

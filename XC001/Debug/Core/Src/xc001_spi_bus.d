@@ -35,7 +35,8 @@ Core/Src/xc001_spi_bus.o: ../Core/Src/xc001_spi_bus.c \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
- ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
+ ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
+ ../Core/Inc/xc001_board.h
 ../Core/Inc/xc001_spi_bus.h:
 ../Core/Inc/spi.h:
 ../Core/Inc/main.h:
@@ -75,3 +76,4 @@ Core/Src/xc001_spi_bus.o: ../Core/Src/xc001_spi_bus.c \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h:
+../Core/Inc/xc001_board.h:

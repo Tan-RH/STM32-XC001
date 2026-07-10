@@ -36,7 +36,8 @@ Core/Src/xc001_rs485.o: ../Core/Src/xc001_rs485.c \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
- ../Core/Inc/main.h
+ ../Core/Inc/main.h ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h \
+ ../Core/Inc/xc001_board.h
 ../Core/Inc/xc001_rs485.h:
 ../Core/Inc/usart.h:
 ../Core/Inc/main.h:
@@ -77,3 +78,5 @@ Core/Src/xc001_rs485.o: ../Core/Src/xc001_rs485.c \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h:
 ../Core/Inc/main.h:
+../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h:
+../Core/Inc/xc001_board.h:

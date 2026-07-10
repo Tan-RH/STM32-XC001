@@ -17,10 +17,11 @@
 static uint8_t s_status_ok = 1U;
 static uint32_t s_last_blink;
 static uint8_t s_led_on;
+static uint8_t s_watchdog_started;
 
 static const XC001_GpioItem s_gpio_table[] = {
-  {"PE3", GPIOE, GPIO_PIN_3, 1}, {"PE4", GPIOE, GPIO_PIN_4, 1},
-  {"PE5", GPIOE, GPIO_PIN_5, 1}, {"PE6", GPIOE, GPIO_PIN_6, 1},
+  {"PE4", GPIOE, GPIO_PIN_4, 1}, {"PE5", GPIOE, GPIO_PIN_5, 1},
+  {"PE6", GPIOE, GPIO_PIN_6, 1},
   {"PC8", GPIOC, GPIO_PIN_8, 1}, {"PC9", GPIOC, GPIO_PIN_9, 1},
   {"PC10", GPIOC, GPIO_PIN_10, 1}, {"PC11", GPIOC, GPIO_PIN_11, 1},
   {"PC12", GPIOC, GPIO_PIN_12, 1}, {"PC13", GPIOC, GPIO_PIN_13, 1},
@@ -69,6 +70,56 @@ void XC001_Board_Task(void)
 void XC001_Board_SetStatusOk(uint8_t ok)
 {
   s_status_ok = ok ? 1U : 0U;
+}
+
+void XC001_Board_WatchdogInit(void)
+{
+#if !defined(DEBUG)
+  uint32_t timeout = 1000000UL;
+
+  RCC->CSR |= RCC_CSR_LSION;
+  while ((RCC->CSR & RCC_CSR_LSIRDY) == 0U && timeout > 0U)
+  {
+    timeout--;
+  }
+  if (timeout == 0U)
+  {
+    XC001_Board_SetStatusOk(0U);
+    return;
+  }
+
+  IWDG1->KR = 0x5555U;
+  IWDG1->PR = 6U;
+  IWDG1->RLR = 999U;
+  timeout = 1000000UL;
+  while (IWDG1->SR != 0U && timeout > 0U)
+  {
+    timeout--;
+  }
+  if (timeout == 0U)
+  {
+    XC001_Board_SetStatusOk(0U);
+    return;
+  }
+  IWDG1->KR = 0xAAAAU;
+  IWDG1->KR = 0xCCCCU;
+  s_watchdog_started = 1U;
+#endif
+}
+
+uint32_t XC001_Board_GetAndClearResetFlags(void)
+{
+  uint32_t flags = RCC->RSR;
+  RCC->RSR |= RCC_RSR_RMVF;
+  return flags;
+}
+
+void XC001_Board_WatchdogRefresh(void)
+{
+  if (s_watchdog_started != 0U)
+  {
+    IWDG1->KR = 0xAAAAU;
+  }
 }
 
 uint8_t XC001_Board_IsEthResetPressed(void)

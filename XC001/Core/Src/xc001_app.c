@@ -13,10 +13,18 @@
 static void app_print_network_url(void)
 {
   char ip[20];
-  char msg[120];
+  char key[24];
+  char msg[220];
+  uint32_t reset_flags = XC001_Board_GetAndClearResetFlags();
 
   XC001_Config_FormatIp(XC001_NetConfig.ip, ip, sizeof(ip));
-  snprintf(msg, sizeof(msg), "[BOOT] HTTP and UDP SCPI services started.\r\n[BOOT] Try http://%s/, ND? or NET:DIAG?.\r\nXC001> ", ip);
+  XC001_Net_FormatRemoteKey(key, sizeof(key));
+  snprintf(msg, sizeof(msg),
+           "[BOOT] HTTP and UDP SCPI services started.\r\n"
+           "[BOOT] Try http://%s/, ND? or NET:DIAG?.\r\n"
+           "[BOOT] Remote write key: %s\r\n"
+           "[BOOT] Reset flags: 0x%08lX\r\nXC001> ",
+           ip, key, (unsigned long)reset_flags);
   XC001_Console_WriteRaw(msg);
 }
 
@@ -25,10 +33,15 @@ void XC001_APP_PreLwipInit(void)
   uint8_t reset_net_cfg;
 
   XC001_Config_LoadDefaults();
+  XC001_Storage_Init();
+  XC001_SCPI_Init();
   reset_net_cfg = XC001_Board_IsEthResetPressed();
   if (reset_net_cfg != 0U)
   {
-    (void)XC001_Storage_Reset();
+    if (XC001_Storage_Reset() == 0U)
+    {
+      XC001_Board_SetStatusOk(0U);
+    }
   }
   else
   {
@@ -54,6 +67,7 @@ void XC001_APP_Init(void)
   XC001_SPIBus_Init();
   XC001_CAN_Init();
   XC001_Net_Init();
+  XC001_Board_WatchdogInit();
   app_print_network_url();
 }
 
@@ -63,4 +77,5 @@ void XC001_APP_Task(void)
   XC001_CAN_Task();
   XC001_Net_Task();
   XC001_Board_Task();
+  XC001_Board_WatchdogRefresh();
 }

@@ -39,7 +39,8 @@ Core/Src/xc001_scpi.o: ../Core/Src/xc001_scpi.c ../Core/Inc/xc001_scpi.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
  ../Core/Inc/xc001_can.h ../Core/Inc/xc001_rs485.h \
  ../Core/Inc/xc001_spi_bus.h ../Core/Inc/xc001_net.h \
- ../Core/Inc/xc001_storage.h ../Core/Inc/xc001_config.h
+ ../Core/Inc/xc001_storage.h ../Core/Inc/xc001_config.h \
+ ../Core/Inc/xc001_console.h ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h
 ../Core/Inc/xc001_scpi.h:
 ../Core/Inc/xc001_config.h:
 ../Core/Inc/xc001_utils.h:
@@ -87,3 +88,5 @@ Core/Src/xc001_scpi.o: ../Core/Src/xc001_scpi.c ../Core/Inc/xc001_scpi.h \
 ../Core/Inc/xc001_net.h:
 ../Core/Inc/xc001_storage.h:
 ../Core/Inc/xc001_config.h:
+../Core/Inc/xc001_console.h:
+../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h:

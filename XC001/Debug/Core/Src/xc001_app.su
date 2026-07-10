@@ -1,4 +1,4 @@
-../Core/Src/xc001_app.c:13:13:app_print_network_url	152	static
-../Core/Src/xc001_app.c:23:6:XC001_APP_PreLwipInit	16	static
-../Core/Src/xc001_app.c:48:6:XC001_APP_Init	8	static
-../Core/Src/xc001_app.c:60:6:XC001_APP_Task	8	static
+../Core/Src/xc001_app.c:13:13:app_print_network_url	288	static
+../Core/Src/xc001_app.c:31:6:XC001_APP_PreLwipInit	16	static
+../Core/Src/xc001_app.c:61:6:XC001_APP_Init	8	static
+../Core/Src/xc001_app.c:74:6:XC001_APP_Task	8	static

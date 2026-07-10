@@ -6,7 +6,8 @@
 **  Author      : STM32CubeIDE
 **
 **  Abstract    : Linker script for STM32H7 series
-**                2048Kbytes FLASH and 1056Kbytes RAM
+**                1792Kbytes application FLASH, 256Kbytes configuration FLASH,
+**                and 1056Kbytes RAM
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -43,7 +44,8 @@ _Min_Stack_Size = 0x1000; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-  FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 2048K
+  /* Bank 2 sectors 6-7 (0x081C0000-0x081FFFFF) are reserved for configuration. */
+  FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 1792K
   DTCMRAM (xrw)  : ORIGIN = 0x20000000, LENGTH = 128K
   RAM_D1 (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K
   RAM_D2 (xrw)   : ORIGIN = 0x30000000, LENGTH = 288K
@@ -188,4 +190,3 @@ SECTIONS
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
-

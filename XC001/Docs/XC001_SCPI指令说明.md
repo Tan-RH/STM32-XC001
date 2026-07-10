@@ -27,6 +27,18 @@
 > 默认网络参数：IP `192.168.1.10`，子网掩码 `255.255.255.0`，网关 `192.168.1.1`。
 > 网页或 SCPI 修改 IP、子网掩码、网关、UDP 端口后会保存到 Flash，重新上电/重启后生效。
 
+### 远程写入鉴权
+
+- 每块控制板使用由 MCU UID 派生的唯一远程写入密钥，密钥会在 UART7 启动日志中显示。
+- UART7 是本地可信控制台，不要求密钥。
+- HTTP 查询类指令可以直接调用；设置或外设操作类指令必须通过 `X-XC001-Key` 请求头提供密钥。
+- UDP 查询类指令可以直接发送；写入类指令格式为 `AUTH <密钥>;<SCPI 指令>`。
+- HTTP 端口是明文协议。生产网络仍应使用 VLAN、管理网或上位机网关进行隔离，不应直接暴露到互联网。
+
+```text
+AUTH XC1234567890ABCDEF;DIG:OUTP PE4,1
+```
+
 ## 基础指令
 
 |指令|参数|说明|
@@ -140,7 +152,8 @@ PHY:INIT=1,ADDR=0,LINK=...
 
 |名称|说明|
 |--|--|
-|`PE3` / `PE4` / `PE5` / `PE6`|扩展 IO，默认低电平|
+|`PE4` / `PE5` / `PE6`|扩展 IO，默认低电平|
+|`PE3`|RS485 方向控制专用，不对 `DIG:OUTP` 开放|
 |`PC8` / `PC9` / `PC10` / `PC11` / `PC12` / `PC13`|扩展 IO，默认低电平|
 |`PA8` / `PA9` / `PD2`|扩展 IO，默认低电平|
 |`LED1`|PB1，运行状态指示灯|
@@ -160,7 +173,7 @@ DIG:OUTP? PE4       # 查询 PE4 当前电平
 ### 返回示例
 
 ```text
-PE3,PE4,PE5,PE6,PC8,PC9,PC10,PC11,PC12,PC13,PA8,PA9,PD2,LED1,LED2,ETH_NRST
+PE4,PE5,PE6,PC8,PC9,PC10,PC11,PC12,PC13,PA8,PA9,PD2,LED1,LED2,ETH_NRST
 OK
 0
 1
@@ -241,20 +254,25 @@ FFFFFF
 |接口|方法|说明|
 |--|--|--|
 |`/`|GET|打开 XC001 网页控制台|
-|`/api/cmd`|POST|请求体为 SCPI 指令文本，返回 SCPI 文本响应|
+|`/api/cmd`|POST|请求体为 SCPI 指令文本；写入类指令需要 `X-XC001-Key` 请求头|
 |`/api/config`|GET|无参数时读取当前运行网络配置|
-|`/api/config?ip=<ip>&mask=<mask>&gw=<gw>&port=<port>&pwd=<pwd>`|GET|保存网络参数到 Flash，默认密码为 `admin`，重启后生效|
+|`/api/config`|POST|表单正文包含 `ip`、`mask`、`gw`、`port`，并通过 `X-XC001-Key` 请求头鉴权；保存后重启生效|
 
 ### 示例
 
 ```http
 POST /api/cmd
+X-XC001-Key: XC1234567890ABCDEF
 
-*IDN?
+DIG:OUTP PE4,1
 ```
 
 ```http
-GET /api/config?ip=192.168.1.20&mask=255.255.255.0&gw=192.168.1.1&port=4000&pwd=admin
+POST /api/config
+X-XC001-Key: XC1234567890ABCDEF
+Content-Type: application/x-www-form-urlencoded
+
+ip=192.168.1.20&mask=255.255.255.0&gw=192.168.1.1&port=4000
 ```
 
 ## 指示灯状态
@@ -271,3 +289,4 @@ GET /api/config?ip=192.168.1.20&mask=255.255.255.0&gw=192.168.1.1&port=4000&pwd=
 3. 网页和 UDP 通道均调用同一套 SCPI 解析逻辑。
 4. 修改网络参数后，当前运行网络不会立即切换；请重新上电或复位后使用新地址访问。
 5. 设置类指令若参数非法，通常返回 `ERR,-222,"Invalid ..."`。
+6. 文档中的 `XC1234567890ABCDEF` 仅为格式示例，实际密钥以设备 UART7 启动日志为准。

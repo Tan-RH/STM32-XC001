@@ -30,6 +30,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "xc001_config.h"
+#include "xc001_board.h"
 
 /* USER CODE END 0 */
 /* Private function prototypes -----------------------------------------------*/
@@ -68,14 +69,14 @@ void MX_LWIP_Init(void)
   IP_ADDRESS[1] = 168;
   IP_ADDRESS[2] = 1;
   IP_ADDRESS[3] = 10;
-  NETMASK_ADDRESS[0] = 192;
-  NETMASK_ADDRESS[1] = 168;
-  NETMASK_ADDRESS[2] = 1;
-  NETMASK_ADDRESS[3] = 1;
-  GATEWAY_ADDRESS[0] = 255;
-  GATEWAY_ADDRESS[1] = 255;
-  GATEWAY_ADDRESS[2] = 255;
-  GATEWAY_ADDRESS[3] = 0;
+  NETMASK_ADDRESS[0] = 255;
+  NETMASK_ADDRESS[1] = 255;
+  NETMASK_ADDRESS[2] = 255;
+  NETMASK_ADDRESS[3] = 0;
+  GATEWAY_ADDRESS[0] = 192;
+  GATEWAY_ADDRESS[1] = 168;
+  GATEWAY_ADDRESS[2] = 1;
+  GATEWAY_ADDRESS[3] = 1;
 
 /* USER CODE BEGIN IP_ADDRESSES */
   IP_ADDRESS[0] = XC001_NetConfig.ip[0];
@@ -118,7 +119,10 @@ void MX_LWIP_Init(void)
   attributes.name = "EthLink";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
   attributes.priority = osPriorityBelowNormal;
-  osThreadNew(ethernet_link_thread, &gnetif, &attributes);
+  if (osThreadNew(ethernet_link_thread, &gnetif, &attributes) == 0)
+  {
+    XC001_Board_SetStatusOk(0U);
+  }
 /* USER CODE END H7_OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN 3 */

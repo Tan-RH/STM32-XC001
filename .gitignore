@@ -1,0 +1,10 @@
+# STM32CubeIDE generated build output
+XC001/Debug/
+XC001/Release/
+
+# Local IDE and temporary files
+*.launch
+*.bak
+*.tmp
+*.exe
+workspace_codex/

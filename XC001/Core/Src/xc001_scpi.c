@@ -7,14 +7,71 @@
 #include "xc001_spi_bus.h"
 #include "xc001_net.h"
 #include "xc001_storage.h"
+#include "xc001_console.h"
 #include "stm32h7xx_hal.h"
+#include "cmsis_os2.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
+static osMutexId_t s_scpi_mutex;
+
 void XC001_SCPI_Init(void)
 {
+  if (s_scpi_mutex == 0)
+  {
+    const osMutexAttr_t attr = {.name = "xc001_scpi"};
+    s_scpi_mutex = osMutexNew(&attr);
+    if (s_scpi_mutex == 0)
+    {
+      XC001_Board_SetStatusOk(0U);
+    }
+  }
+}
+
+static uint8_t save_network_candidate(const uint8_t ip[4], const uint8_t mask[4],
+                                      const uint8_t gateway[4], uint16_t port)
+{
+  XC001_NetworkConfig candidate;
+
+  memcpy(candidate.ip, ip, sizeof(candidate.ip));
+  memcpy(candidate.netmask, mask, sizeof(candidate.netmask));
+  memcpy(candidate.gateway, gateway, sizeof(candidate.gateway));
+  candidate.udp_port = port;
+  if (!XC001_Config_ValidateNetworkFull(candidate.ip, candidate.netmask,
+                                        candidate.gateway, candidate.udp_port))
+  {
+    return 0U;
+  }
+  return XC001_Storage_Save(&candidate);
+}
+
+uint8_t XC001_SCPI_IsReadOnly(const char *command)
+{
+  static const char *const exact_commands[] = {
+    "*IDN?", "IDN?", "PING?", "SYST:ERR?", "SYST:HELP?", "STAT?",
+    "NET:STAT?", "NET:DIAG?", "ND?", "NET:PHY?", "NET:IP?",
+    "NET:MASK?", "NET:GATE?", "NET:PORT?", "NET:MAC?", "DIG:LIST?",
+    "CAN:STAT?", "CAN:RX?", "RS485:STAT?", "RS485:RX?", "SPI:STAT?"
+  };
+  char line[XC001_SCPI_LINE_SIZE];
+  char *cmd;
+
+  if (command == 0)
+  {
+    return 0U;
+  }
+  snprintf(line, sizeof(line), "%s", command);
+  cmd = XC001_Trim(line);
+  for (uint32_t i = 0U; i < (sizeof(exact_commands) / sizeof(exact_commands[0])); i++)
+  {
+    if (XC001_StrCaseCmp(cmd, exact_commands[i]) == 0)
+    {
+      return 1U;
+    }
+  }
+  return (XC001_StrNCaseCmp(cmd, "DIG:OUTP? ", 10U) == 0) ? 1U : 0U;
 }
 
 static void reply_net_config(char *reply, size_t reply_size)
@@ -32,6 +89,7 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
 {
   char line[XC001_SCPI_LINE_SIZE];
   char *cmd;
+  uint8_t mutex_locked = 0U;
 
   if (reply == 0 || reply_size == 0U)
   {
@@ -51,6 +109,18 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
     snprintf(reply, reply_size, "ERR,-100,\"Empty command\"");
     return;
   }
+
+  if (s_scpi_mutex == 0)
+  {
+    snprintf(reply, reply_size, "ERR,-300,\"Command executor unavailable\"");
+    return;
+  }
+  if (osMutexAcquire(s_scpi_mutex, osWaitForever) != osOK)
+  {
+    snprintf(reply, reply_size, "ERR,-300,\"Command executor unavailable\"");
+    return;
+  }
+  mutex_locked = 1U;
 
   if (XC001_StrCaseCmp(cmd, "*IDN?") == 0 || XC001_StrCaseCmp(cmd, "IDN?") == 0)
   {
@@ -80,12 +150,13 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
   }
   else if (XC001_StrCaseCmp(cmd, "STAT?") == 0)
   {
-    char can[80], rs[80], spi[80], net[120];
+    char can[80], rs[80], spi[80], net[120], uart[40];
     XC001_CAN_Status(can, sizeof(can));
     XC001_RS485_Status(rs, sizeof(rs));
     XC001_SPIBus_Status(spi, sizeof(spi));
     reply_net_config(net, sizeof(net));
-    snprintf(reply, reply_size, "%s;%s;%s;%s", net, can, rs, spi);
+    snprintf(uart, sizeof(uart), "UART7:OVF=%lu", (unsigned long)XC001_Console_GetRxOverflow());
+    snprintf(reply, reply_size, "%s;%s;%s;%s;%s", net, can, rs, spi, uart);
   }
   else if (XC001_StrCaseCmp(cmd, "NET:IP?") == 0)
   {
@@ -94,17 +165,14 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
   else if (XC001_StrNCaseCmp(cmd, "NET:IP ", 7) == 0)
   {
     uint8_t ip[4];
-    XC001_NetworkConfig active_cfg = XC001_NetConfig;
     if (XC001_Config_ParseIp(XC001_SkipSpace(cmd + 7), ip) &&
-        XC001_Config_SetNetwork(ip, XC001_NetConfig.udp_port) &&
-        XC001_Storage_Save(&XC001_NetConfig))
+        save_network_candidate(ip, XC001_NetConfig.netmask, XC001_NetConfig.gateway,
+                               XC001_NetConfig.udp_port))
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "OK,SAVED,REBOOT_REQUIRED");
     }
     else
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "ERR,-222,\"Invalid IP\"");
     }
   }
@@ -119,17 +187,14 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
   else if (XC001_StrNCaseCmp(cmd, "NET:MASK ", 9) == 0)
   {
     uint8_t mask[4];
-    XC001_NetworkConfig active_cfg = XC001_NetConfig;
     if (XC001_Config_ParseIp(XC001_SkipSpace(cmd + 9), mask) &&
-        XC001_Config_SetNetworkFull(XC001_NetConfig.ip, mask, XC001_NetConfig.gateway, XC001_NetConfig.udp_port) &&
-        XC001_Storage_Save(&XC001_NetConfig))
+        save_network_candidate(XC001_NetConfig.ip, mask, XC001_NetConfig.gateway,
+                               XC001_NetConfig.udp_port))
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "OK,SAVED,REBOOT_REQUIRED");
     }
     else
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "ERR,-222,\"Invalid netmask\"");
     }
   }
@@ -140,34 +205,28 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
   else if (XC001_StrNCaseCmp(cmd, "NET:GATE ", 9) == 0)
   {
     uint8_t gw[4];
-    XC001_NetworkConfig active_cfg = XC001_NetConfig;
     if (XC001_Config_ParseIp(XC001_SkipSpace(cmd + 9), gw) &&
-        XC001_Config_SetNetworkFull(XC001_NetConfig.ip, XC001_NetConfig.netmask, gw, XC001_NetConfig.udp_port) &&
-        XC001_Storage_Save(&XC001_NetConfig))
+        save_network_candidate(XC001_NetConfig.ip, XC001_NetConfig.netmask, gw,
+                               XC001_NetConfig.udp_port))
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "OK,SAVED,REBOOT_REQUIRED");
     }
     else
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "ERR,-222,\"Invalid gateway\"");
     }
   }
   else if (XC001_StrNCaseCmp(cmd, "NET:PORT ", 9) == 0)
   {
     uint16_t port;
-    XC001_NetworkConfig active_cfg = XC001_NetConfig;
     if (XC001_ParseU16(XC001_SkipSpace(cmd + 9), &port) &&
-        XC001_Config_SetNetwork(XC001_NetConfig.ip, port) &&
-        XC001_Storage_Save(&XC001_NetConfig))
+        save_network_candidate(XC001_NetConfig.ip, XC001_NetConfig.netmask,
+                               XC001_NetConfig.gateway, port))
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "OK,SAVED,REBOOT_REQUIRED");
     }
     else
     {
-      XC001_NetConfig = active_cfg;
       snprintf(reply, reply_size, "ERR,-222,\"Invalid port\"");
     }
   }
@@ -190,7 +249,7 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
   }
   else if (XC001_StrCaseCmp(cmd, "NET:MAC?") == 0)
   {
-    snprintf(reply, reply_size, "00:80:E1:00:00:00");
+    XC001_Net_FormatMac(reply, reply_size);
   }
   else if (XC001_StrCaseCmp(cmd, "DIG:LIST?") == 0)
   {
@@ -219,10 +278,23 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
       *comma = '\0';
       arg = XC001_Trim(arg);
       comma = XC001_Trim(comma + 1);
-      ok = (toupper((unsigned char)comma[0]) == 'T') ?
-           XC001_Board_WriteGpio(arg, 0U, 1U) :
-           XC001_Board_WriteGpio(arg, (comma[0] == '1') ? 1U : 0U, 0U);
-      snprintf(reply, reply_size, "%s", ok ? "OK" : "ERR,-224,\"Unknown GPIO\"");
+      if (XC001_StrCaseCmp(comma, "T") == 0)
+      {
+        ok = XC001_Board_WriteGpio(arg, 0U, 1U);
+      }
+      else if (strcmp(comma, "0") == 0 || strcmp(comma, "1") == 0)
+      {
+        ok = XC001_Board_WriteGpio(arg, (comma[0] == '1') ? 1U : 0U, 0U);
+      }
+      else
+      {
+        snprintf(reply, reply_size, "ERR,-222,\"Value must be 0, 1 or T\"");
+        ok = 2U;
+      }
+      if (ok != 2U)
+      {
+        snprintf(reply, reply_size, "%s", ok ? "OK" : "ERR,-224,\"Unknown GPIO\"");
+      }
     }
     else
     {
@@ -250,8 +322,8 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
     else
     {
       *comma = '\0';
-      id = strtoul(XC001_Trim(arg), 0, 0);
-      if (XC001_ParseHexBytes(comma + 1, data, sizeof(data), &len) && XC001_CAN_Send(id, data, len))
+      if (XC001_ParseU32(XC001_Trim(arg), 0x1FFFFFFFUL, &id) &&
+          XC001_ParseHexBytes(comma + 1, data, sizeof(data), &len) && XC001_CAN_Send(id, data, len))
       {
         snprintf(reply, reply_size, "OK");
       }
@@ -292,5 +364,10 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
   else
   {
     snprintf(reply, reply_size, "ERR,-113,\"Undefined header\"");
+  }
+
+  if (mutex_locked != 0U)
+  {
+    (void)osMutexRelease(s_scpi_mutex);
   }
 }

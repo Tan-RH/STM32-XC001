@@ -85,6 +85,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  SCB_EnableICache();
+  SCB_EnableDCache();
 
   /* USER CODE END Init */
 

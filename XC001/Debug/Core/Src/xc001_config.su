@@ -1,7 +1,10 @@
-../Core/Src/xc001_config.c:6:16:is_valid_host_ip	16	static
-../Core/Src/xc001_config.c:19:16:is_valid_netmask	32	static
-../Core/Src/xc001_config.c:51:6:XC001_Config_LoadDefaults	4	static
-../Core/Src/xc001_config.c:68:9:XC001_Config_SetNetwork	16	static
-../Core/Src/xc001_config.c:73:9:XC001_Config_SetNetworkFull	32	static
-../Core/Src/xc001_config.c:94:9:XC001_Config_ParseIp	40	static
-../Core/Src/xc001_config.c:118:6:XC001_Config_FormatIp	40	static
+../Core/Src/xc001_config.c:8:16:is_valid_host_ip	16	static
+../Core/Src/xc001_config.c:21:17:ip_to_u32	16	static
+../Core/Src/xc001_config.c:29:16:is_zero_ip	16	static
+../Core/Src/xc001_config.c:34:16:is_valid_netmask	32	static
+../Core/Src/xc001_config.c:66:6:XC001_Config_LoadDefaults	4	static
+../Core/Src/xc001_config.c:83:9:XC001_Config_SetNetwork	16	static
+../Core/Src/xc001_config.c:88:9:XC001_Config_SetNetworkFull	32	static
+../Core/Src/xc001_config.c:105:9:XC001_Config_ValidateNetworkFull	40	static
+../Core/Src/xc001_config.c:141:9:XC001_Config_ParseIp	32	static
+../Core/Src/xc001_config.c:190:6:XC001_Config_FormatIp	40	static

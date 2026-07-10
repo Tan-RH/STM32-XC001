@@ -1,4 +1,12 @@
-../Core/Src/xc001_storage.c:24:17:checksum32	2
-../Core/Src/xc001_storage.c:36:9:XC001_Storage_Load	8
-../Core/Src/xc001_storage.c:58:9:XC001_Storage_Save	4
-../Core/Src/xc001_storage.c:90:9:XC001_Storage_Reset	2
+../Core/Src/xc001_storage.c:48:17:checksum32	2
+../Core/Src/xc001_storage.c:60:16:lock_storage	3
+../Core/Src/xc001_storage.c:65:13:unlock_storage	2
+../Core/Src/xc001_storage.c:73:16:record_is_erased	3
+../Core/Src/xc001_storage.c:87:16:record_is_valid	6
+../Core/Src/xc001_storage.c:102:16:legacy_is_valid	4
+../Core/Src/xc001_storage.c:113:13:scan_records	7
+../Core/Src/xc001_storage.c:135:26:erase_storage_sector	2
+../Core/Src/xc001_storage.c:148:6:XC001_Storage_Init	3
+../Core/Src/xc001_storage.c:161:9:XC001_Storage_Load	5
+../Core/Src/xc001_storage.c:187:9:XC001_Storage_Save	20
+../Core/Src/xc001_storage.c:253:9:XC001_Storage_Reset	7

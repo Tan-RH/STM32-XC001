@@ -33,6 +33,27 @@
 
 /* Within 'USER CODE' section, code will be kept by default at each generation */
 /* USER CODE BEGIN 0 */
+#include "xc001_board.h"
+
+static uint8_t s_xc001_mac[6];
+
+static void xc001_build_mac(uint8_t mac[6])
+{
+  const uint32_t uid[3] = {HAL_GetUIDw0(), HAL_GetUIDw1(), HAL_GetUIDw2()};
+  const uint8_t *bytes = (const uint8_t *)uid;
+  uint64_t hash = 1469598103934665603ULL;
+
+  for (uint32_t i = 0U; i < sizeof(uid); i++)
+  {
+    hash ^= bytes[i];
+    hash *= 1099511628211ULL;
+  }
+  mac[0] = 0x02U;
+  for (uint32_t i = 1U; i < 6U; i++)
+  {
+    mac[i] = (uint8_t)(hash >> ((i - 1U) * 8U));
+  }
+}
 
 /* USER CODE END 0 */
 
@@ -235,6 +256,8 @@ static void low_level_init(struct netif *netif)
   heth.Init.RxBuffLen = 1536;
 
   /* USER CODE BEGIN MACADDRESS */
+  xc001_build_mac(s_xc001_mac);
+  heth.Init.MACAddr = s_xc001_mac;
 
   /* USER CODE END MACADDRESS */
 
@@ -280,7 +303,14 @@ static void low_level_init(struct netif *netif)
   attributes.name = "EthIf";
   attributes.stack_size = INTERFACE_THREAD_STACK_SIZE;
   attributes.priority = osPriorityNormal;
-  osThreadNew(ethernetif_input, netif, &attributes);
+  if (RxPktSemaphore == 0 || TxPktSemaphore == 0 ||
+      osThreadNew(ethernetif_input, netif, &attributes) == 0)
+  {
+    XC001_Board_SetStatusOk(0U);
+    netif_set_link_down(netif);
+    netif_set_down(netif);
+    return;
+  }
 /* USER CODE END OS_THREAD_NEW_CMSIS_RTOS_V2 */
 
 /* USER CODE BEGIN PHY_PRE_CONFIG */
@@ -292,6 +322,7 @@ static void low_level_init(struct netif *netif)
   /* Initialize the LAN8742 ETH PHY */
   if(LAN8742_Init(&LAN8742) != LAN8742_STATUS_OK)
   {
+    XC001_Board_SetStatusOk(0U);
     netif_set_link_down(netif);
     netif_set_down(netif);
     return;
@@ -339,9 +370,17 @@ static void low_level_init(struct netif *netif)
     MACConf.Speed = speed;
     HAL_ETH_SetMACConfig(&heth, &MACConf);
 
-    HAL_ETH_Start_IT(&heth);
-    netif_set_up(netif);
-    netif_set_link_up(netif);
+    if (HAL_ETH_Start_IT(&heth) == HAL_OK)
+    {
+      netif_set_up(netif);
+      netif_set_link_up(netif);
+    }
+    else
+    {
+      XC001_Board_SetStatusOk(0U);
+      netif_set_link_down(netif);
+      netif_set_down(netif);
+    }
 /* USER CODE BEGIN PHY_POST_CONFIG */
 
 /* USER CODE END PHY_POST_CONFIG */
@@ -350,6 +389,7 @@ static void low_level_init(struct netif *netif)
   }
   else
   {
+    XC001_Board_SetStatusOk(0U);
     Error_Handler();
   }
 #endif /* LWIP_ARP || LWIP_ETHERNET */

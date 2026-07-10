@@ -1,6 +1,7 @@
 #include "xc001_console.h"
 #include "xc001_config.h"
 #include "xc001_scpi.h"
+#include "xc001_board.h"
 #include "usart.h"
 #include "cmsis_os2.h"
 #include <stdio.h>
@@ -113,7 +114,16 @@ void XC001_Console_Init(void)
       .priority = (osPriority_t)osPriorityAboveNormal
     };
     s_console_thread = osThreadNew((osThreadFunc_t)XC001_Console_Task, 0, &attr);
+    if (s_console_thread == 0)
+    {
+      XC001_Board_SetStatusOk(0U);
+    }
   }
+}
+
+uint32_t XC001_Console_GetRxOverflow(void)
+{
+  return s_rx_overflow;
 }
 
 void XC001_Console_WriteRaw(const char *text)

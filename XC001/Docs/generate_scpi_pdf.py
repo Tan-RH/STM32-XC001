@@ -115,8 +115,8 @@ def build_pdf():
         ("网络指令", "NET:PORT?", "查询 UDP SCPI 端口。", "4000", "查询"),
         ("网络指令", "NET:PORT n", "设置 UDP SCPI 端口并保存到 Flash，重新上电/重启后生效。n 范围 1~65535。", "OK,SAVED,REBOOT_REQUIRED", "设置"),
         ("网络指令", "NET:SERV ON", "请求启动 HTTP/UDP 网络服务。当前固件已配置为上电自动启动。", "OK,STARTING", "设置"),
-        ("网络指令", "NET:MAC?", "查询固件配置的 MAC 地址。", "00:80:E1:00:00:00", "查询"),
-        ("数字 IO", "DIG:LIST?", "列出固件识别的扩展数字 IO 名称。", "PE3,PE4,...,LED1,LED2,ETH_NRST", "查询"),
+        ("网络指令", "NET:MAC?", "查询由 MCU UID 派生的设备唯一 MAC 地址。", "02:xx:xx:xx:xx:xx", "查询"),
+        ("数字 IO", "DIG:LIST?", "列出固件识别的扩展数字 IO 名称。PE3 保留为 RS485 DE。", "PE4,PE5,...,LED1,LED2,ETH_NRST", "查询"),
         ("数字 IO", "DIG:OUTP pin,val", "设置指定可写 IO 输出。val=0 输出低电平，val=1 输出高电平，val=T/t 表示翻转。", "OK", "设置"),
         ("数字 IO", "DIG:OUTP? pin", "读取指定 IO 当前电平。", "0 或 1", "查询"),
         ("CAN 指令", "CAN:STAT?", "查询 FDCAN1 初始化状态、发送计数和接收计数。", "CAN1:READY=1,TX=0,RX=0", "查询"),
@@ -141,7 +141,7 @@ def build_pdf():
     story.append(p("1. 修订记录", styles["H1CN"]))
     rev = [
         [p("版本", styles["BodyCN"]), p("日期", styles["BodyCN"]), p("说明", styles["BodyCN"])],
-        [p("V1.0", styles["BodyCN"]), p(date.today().isoformat(), styles["BodyCN"]), p("根据当前 XC001 固件源码整理 SCPI 指令、网络参数和网页接口。", styles["BodyCN"])],
+        [p("V1.1", styles["BodyCN"]), p(date.today().isoformat(), styles["BodyCN"]), p("增加设备唯一 MAC、远程写入鉴权和可靠配置存储说明。", styles["BodyCN"])],
     ]
     story.append(table(rev, [25 * mm, 35 * mm, 120 * mm]))
 
@@ -149,8 +149,8 @@ def build_pdf():
     interfaces = [
         [p("接口", styles["BodyCN"]), p("参数", styles["BodyCN"]), p("说明", styles["BodyCN"])],
         [p("UART7 控制台", styles["BodyCN"]), p("115200, 8N1", styles["BodyCN"]), p("Type-C 调试串口。输入 SCPI 指令后返回文本响应。", styles["BodyCN"])],
-        [p("UDP SCPI", styles["BodyCN"]), p("默认端口 4000", styles["BodyCN"]), p("向板卡 IP 的 UDP 端口发送 SCPI 文本，返回文本响应。", styles["BodyCN"])],
-        [p("Web 页面", styles["BodyCN"]), p("HTTP 80", styles["BodyCN"]), p("默认 http://192.168.1.10/ ，可在网页内发送 SCPI 指令并保存网络参数。", styles["BodyCN"])],
+        [p("UDP SCPI", styles["BodyCN"]), p("默认端口 4000", styles["BodyCN"]), p("查询指令可直接发送；写入指令格式为 AUTH <设备密钥>;<SCPI 指令>。", styles["BodyCN"])],
+        [p("Web 页面", styles["BodyCN"]), p("HTTP 80", styles["BodyCN"]), p("写入操作通过 X-XC001-Key 请求头鉴权；设备密钥见 UART7 启动日志。", styles["BodyCN"])],
     ]
     story.append(table(interfaces, [32 * mm, 45 * mm, 103 * mm]))
 
@@ -169,7 +169,7 @@ def build_pdf():
         p(
             "SCPI 指令大小写不敏感。查询类指令通常以 ? 结尾；设置类指令使用空格分隔参数。"
             "建议每条串口指令以回车或换行结束。成功通常返回 OK 或具体数据；参数错误返回 ERR,-222；"
-            "未知指令返回 ERR,-113。",
+            "未知指令返回 ERR,-113。远程写入需要设备唯一密钥，UART7 本地控制台不需要密钥。",
             styles["BodyCN"],
         )
     )
@@ -183,7 +183,8 @@ def build_pdf():
     story.append(p("6. 数字 IO 名称说明", styles["H1CN"]))
     io_data = [
         [p("名称", styles["BodyCN"]), p("端口/引脚", styles["BodyCN"]), p("说明", styles["BodyCN"])],
-        [p("PE3, PE4, PE5, PE6", styles["CodeCN"]), p("GPIOE", styles["BodyCN"]), p("扩展输出，默认低电平。PE3 同时用于 RS485 DE 控制。", styles["BodyCN"])],
+        [p("PE4, PE5, PE6", styles["CodeCN"]), p("GPIOE", styles["BodyCN"]), p("扩展输出，默认低电平。", styles["BodyCN"])],
+        [p("PE3", styles["CodeCN"]), p("GPIOE", styles["BodyCN"]), p("RS485 DE 专用，不对 DIG:OUTP 开放。", styles["BodyCN"])],
         [p("PC8~PC13", styles["CodeCN"]), p("GPIOC", styles["BodyCN"]), p("扩展输出，默认低电平。", styles["BodyCN"])],
         [p("PA8, PA9, PD2", styles["CodeCN"]), p("GPIOA/GPIOD", styles["BodyCN"]), p("扩展输出，默认低电平。", styles["BodyCN"])],
         [p("LED1", styles["CodeCN"]), p("PB1", styles["BodyCN"]), p("运行状态指示灯，正常运行时闪烁。", styles["BodyCN"])],
@@ -196,9 +197,9 @@ def build_pdf():
     http_data = [
         [p("接口", styles["BodyCN"]), p("方法", styles["BodyCN"]), p("说明", styles["BodyCN"])],
         [p("/", styles["CodeCN"]), p("GET", styles["BodyCN"]), p("打开 XC001 网页控制台。", styles["BodyCN"])],
-        [p("/api/cmd", styles["CodeCN"]), p("POST", styles["BodyCN"]), p("请求体为 SCPI 指令文本，返回 SCPI 文本响应。", styles["BodyCN"])],
+        [p("/api/cmd", styles["CodeCN"]), p("POST", styles["BodyCN"]), p("请求体为 SCPI 指令；写入类指令需要 X-XC001-Key 请求头。", styles["BodyCN"])],
         [p("/api/config", styles["CodeCN"]), p("GET", styles["BodyCN"]), p("无参数时读取当前运行网络配置。", styles["BodyCN"])],
-        [p("/api/config?ip=...&mask=...&gw=...&port=...&pwd=...", styles["CodeCN"]), p("GET", styles["BodyCN"]), p("保存网络参数到 Flash。默认网页密码为 admin，保存后重启生效。", styles["BodyCN"])],
+        [p("/api/config", styles["CodeCN"]), p("POST", styles["BodyCN"]), p("表单正文包含 ip、mask、gw、port，并使用 X-XC001-Key 鉴权。", styles["BodyCN"])],
     ]
     story.append(table(http_data, [62 * mm, 22 * mm, 96 * mm]))
 

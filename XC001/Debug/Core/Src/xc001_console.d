@@ -36,8 +36,9 @@ Core/Src/xc001_console.o: ../Core/Src/xc001_console.c \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
- ../Core/Inc/xc001_config.h ../Core/Inc/xc001_scpi.h ../Core/Inc/usart.h \
- ../Core/Inc/main.h ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h
+ ../Core/Inc/xc001_config.h ../Core/Inc/xc001_scpi.h \
+ ../Core/Inc/xc001_board.h ../Core/Inc/main.h ../Core/Inc/usart.h \
+ ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h
 ../Core/Inc/xc001_console.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h:
 ../Core/Inc/stm32h7xx_hal_conf.h:
@@ -77,6 +78,7 @@ Core/Src/xc001_console.o: ../Core/Src/xc001_console.c \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h:
 ../Core/Inc/xc001_config.h:
 ../Core/Inc/xc001_scpi.h:
-../Core/Inc/usart.h:
+../Core/Inc/xc001_board.h:
 ../Core/Inc/main.h:
+../Core/Inc/usart.h:
 ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h:

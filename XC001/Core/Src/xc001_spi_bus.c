@@ -1,5 +1,6 @@
 #include "xc001_spi_bus.h"
 #include "spi.h"
+#include "xc001_board.h"
 #include <stdio.h>
 
 static uint8_t s_ready;
@@ -14,6 +15,10 @@ void XC001_SPIBus_Init(void)
     if (HAL_SPI_Init(&hspi5) == HAL_OK)
     {
       s_ready = 1U;
+    }
+    else
+    {
+      XC001_Board_SetStatusOk(0U);
     }
   }
   else

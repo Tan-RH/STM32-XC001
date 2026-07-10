@@ -3,6 +3,7 @@
 #include "xc001_storage.h"
 #include "xc001_scpi.h"
 #include "xc001_utils.h"
+#include "xc001_board.h"
 #include "cmsis_os2.h"
 #include "lwip/sockets.h"
 #include "lwip/netif.h"
@@ -32,15 +33,80 @@ static volatile uint32_t s_http_max_ms;
 static volatile uint32_t s_http_last_bytes;
 static char s_http_page[6144];
 
+static uint64_t remote_key_hash(void)
+{
+  const uint32_t uid[3] = {HAL_GetUIDw0(), HAL_GetUIDw1(), HAL_GetUIDw2()};
+  const uint8_t *bytes = (const uint8_t *)uid;
+  uint64_t hash = 1469598103934665603ULL ^ 0x58433031ULL;
+
+  for (uint32_t i = 0U; i < sizeof(uid); i++)
+  {
+    hash ^= bytes[i];
+    hash *= 1099511628211ULL;
+  }
+  return hash;
+}
+
+void XC001_Net_FormatRemoteKey(char *out, size_t out_size)
+{
+  static const char hex[] = "0123456789ABCDEF";
+  uint64_t hash;
+
+  if (out == 0 || out_size == 0U)
+  {
+    return;
+  }
+  if (out_size < 19U)
+  {
+    out[0] = '\0';
+    return;
+  }
+  hash = remote_key_hash();
+  out[0] = 'X';
+  out[1] = 'C';
+  for (uint32_t i = 0U; i < 16U; i++)
+  {
+    out[2U + i] = hex[(hash >> (60U - (i * 4U))) & 0x0FULL];
+  }
+  out[18] = '\0';
+}
+
+static uint8_t remote_key_matches(const char *candidate)
+{
+  char expected[24];
+  uint8_t difference = 0U;
+  size_t candidate_len;
+  size_t expected_len;
+
+  if (candidate == 0)
+  {
+    return 0U;
+  }
+  XC001_Net_FormatRemoteKey(expected, sizeof(expected));
+  candidate_len = strlen(candidate);
+  expected_len = strlen(expected);
+  if (candidate_len != expected_len)
+  {
+    return 0U;
+  }
+  for (size_t i = 0U; i < expected_len; i++)
+  {
+    difference |= (uint8_t)(candidate[i] ^ expected[i]);
+  }
+  return (difference == 0U) ? 1U : 0U;
+}
+
 static uint8_t query_value(const char *query, const char *key, char *out, size_t out_size)
 {
-  size_t key_len = strlen(key);
-  const char *p = query;
+  size_t key_len;
+  const char *p;
 
   if (query == 0 || key == 0 || out == 0 || out_size == 0U)
   {
     return 0U;
   }
+  key_len = strlen(key);
+  p = query;
   while (*p != '\0')
   {
     if ((p == query || *(p - 1) == '&') && strncmp(p, key, key_len) == 0 && p[key_len] == '=')
@@ -65,6 +131,126 @@ static uint8_t query_value(const char *query, const char *key, char *out, size_t
     p++;
   }
   return 0U;
+}
+
+static uint8_t header_value(const char *request, const char *key, char *out, size_t out_size)
+{
+  const char *line;
+  size_t key_len;
+
+  if (request == 0 || key == 0 || out == 0 || out_size == 0U)
+  {
+    return 0U;
+  }
+  key_len = strlen(key);
+  line = strstr(request, "\r\n");
+  while (line != 0)
+  {
+    const char *value;
+    const char *end;
+    size_t len;
+
+    line += 2;
+    if (line[0] == '\r' && line[1] == '\n')
+    {
+      break;
+    }
+    end = strstr(line, "\r\n");
+    if (end == 0)
+    {
+      break;
+    }
+    if ((size_t)(end - line) > key_len && line[key_len] == ':' &&
+        XC001_StrNCaseCmp(line, key, key_len) == 0)
+    {
+      value = line + key_len + 1U;
+      while (value < end && (*value == ' ' || *value == '\t'))
+      {
+        value++;
+      }
+      while (end > value && (end[-1] == ' ' || end[-1] == '\t'))
+      {
+        end--;
+      }
+      len = (size_t)(end - value);
+      if (len >= out_size)
+      {
+        return 0U;
+      }
+      memcpy(out, value, len);
+      out[len] = '\0';
+      return 1U;
+    }
+    line = end;
+  }
+  return 0U;
+}
+
+static uint8_t remote_command(const char *input, const char *http_key,
+                              char *command, size_t command_size)
+{
+  const char *cmd = input;
+  char udp_key[32];
+
+  if (input == 0 || command == 0 || command_size == 0U)
+  {
+    return 0U;
+  }
+  if (XC001_SCPI_IsReadOnly(input))
+  {
+    if (strlen(input) >= command_size)
+    {
+      return 0U;
+    }
+    snprintf(command, command_size, "%s", input);
+    return 1U;
+  }
+
+  if (http_key != 0)
+  {
+    if (!remote_key_matches(http_key))
+    {
+      return 0U;
+    }
+  }
+  else
+  {
+    const char *separator;
+    size_t key_len;
+
+    if (XC001_StrNCaseCmp(input, "AUTH ", 5U) != 0)
+    {
+      return 0U;
+    }
+    separator = strchr(input + 5, ';');
+    if (separator == 0)
+    {
+      return 0U;
+    }
+    key_len = (size_t)(separator - (input + 5));
+    while (key_len > 0U && (input[5U + key_len - 1U] == ' ' || input[5U + key_len - 1U] == '\t'))
+    {
+      key_len--;
+    }
+    if (key_len == 0U || key_len >= sizeof(udp_key))
+    {
+      return 0U;
+    }
+    memcpy(udp_key, input + 5, key_len);
+    udp_key[key_len] = '\0';
+    if (!remote_key_matches(udp_key))
+    {
+      return 0U;
+    }
+    cmd = XC001_SkipSpace(separator + 1);
+  }
+
+  if (*cmd == '\0' || strlen(cmd) >= command_size)
+  {
+    return 0U;
+  }
+  snprintf(command, command_size, "%s", cmd);
+  return 1U;
 }
 
 static uint8_t http_send_all(int fd, const char *data, size_t len)
@@ -104,7 +290,7 @@ static void send_response(int fd, const char *type, const char *body)
   int n = snprintf(hdr, sizeof(hdr),
                    "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\nContent-Length: %lu\r\n\r\n",
                    type, (unsigned long)body_len);
-  if (n > 0)
+  if (n > 0 && (size_t)n < sizeof(hdr))
   {
     (void)http_send_all(fd, hdr, (size_t)n);
     (void)http_send_all(fd, body, body_len);
@@ -118,10 +304,25 @@ static void send_error(int fd, const char *body)
   int n = snprintf(hdr, sizeof(hdr),
                    "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\nContent-Length: %lu\r\n\r\n",
                    (unsigned long)body_len);
-  if (n > 0)
+  if (n > 0 && (size_t)n < sizeof(hdr))
   {
     (void)http_send_all(fd, hdr, (size_t)n);
     (void)http_send_all(fd, body, body_len);
+  }
+}
+
+static void send_unauthorized(int fd)
+{
+  static const char body[] = "Authentication required";
+  char hdr[192];
+  int n = snprintf(hdr, sizeof(hdr),
+                   "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain; charset=utf-8\r\n"
+                   "Cache-Control: no-store\r\nConnection: close\r\nContent-Length: %lu\r\n\r\n",
+                   (unsigned long)(sizeof(body) - 1U));
+  if (n > 0 && (size_t)n < sizeof(hdr))
+  {
+    (void)http_send_all(fd, hdr, (size_t)n);
+    (void)http_send_all(fd, body, sizeof(body) - 1U);
   }
 }
 
@@ -152,7 +353,7 @@ static void send_index_page(int fd)
     "<div class=card><div class=k>HTTP</div><div class=v>%u</div></div>"
     "<div class=card><div class=k>UDP</div><div class=v>%u</div></div>"
     "</div><section class=panel><h2>SCPI &#25351;&#20196;</h2><textarea id=cmd>*IDN?</textarea><div><button onclick=sendCmd()>&#21457;&#36865;</button><button class=g onclick=\"run('STAT?')\">STAT?</button><button class=g onclick=\"run('ND?')\">ND?</button><button class=g onclick=\"run('NET:STAT?')\">NET:STAT?</button><button class=g onclick=\"run('SYST:HELP?')\">HELP</button></div><pre id=out>Ready.</pre></section></main>"
-    "<script>const $=id=>document.getElementById(id);async function sendCmd(){try{let r=await fetch('/api/cmd',{method:'POST',body:$('cmd').value,cache:'no-store'});$('out').textContent=await r.text()}catch(e){$('out').textContent='\\u901a\\u4fe1\\u5931\\u8d25: '+e.message}}function run(c){$('cmd').value=c;sendCmd()}async function saveCfg(){if(!$('pwd').value){$('out').textContent='\\u8bf7\\u8f93\\u5165\\u5bc6\\u7801';return}let u='/api/config?ip='+encodeURIComponent($('ip').value)+'&mask='+encodeURIComponent($('mask').value)+'&gw='+encodeURIComponent($('gw').value)+'&port='+encodeURIComponent($('port').value)+'&pwd='+encodeURIComponent($('pwd').value);try{let r=await fetch(u,{cache:'no-store'});let t=await r.text();$('out').textContent=t+'\\n\\u914d\\u7f6e\\u5df2\\u4fdd\\u5b58\\uff0c\\u91cd\\u542f\\u540e\\u751f\\u6548\\u3002'}catch(e){$('out').textContent='\\u4fdd\\u5b58\\u5931\\u8d25: '+e.message}}</script></body></html>";
+    "<script>const $=id=>document.getElementById(id);const auth=()=>({'X-XC001-Key':$('pwd').value});async function sendCmd(){try{let r=await fetch('/api/cmd',{method:'POST',headers:auth(),body:$('cmd').value,cache:'no-store'});$('out').textContent=await r.text()}catch(e){$('out').textContent='\\u901a\\u4fe1\\u5931\\u8d25: '+e.message}}function run(c){$('cmd').value=c;sendCmd()}async function saveCfg(){if(!$('pwd').value){$('out').textContent='\\u8bf7\\u8f93\\u5165\\u5bc6\\u7801';return}let b=new URLSearchParams({ip:$('ip').value,mask:$('mask').value,gw:$('gw').value,port:$('port').value});try{let r=await fetch('/api/config',{method:'POST',headers:{...auth(),'Content-Type':'application/x-www-form-urlencoded'},body:b.toString(),cache:'no-store'});let t=await r.text();$('out').textContent=t+(r.ok?'\\n\\u914d\\u7f6e\\u5df2\\u4fdd\\u5b58\\uff0c\\u91cd\\u542f\\u540e\\u751f\\u6548\\u3002':'')}catch(e){$('out').textContent='\\u4fdd\\u5b58\\u5931\\u8d25: '+e.message}}</script></body></html>";
 
   XC001_Config_FormatIp(XC001_NetConfig.ip, ip, sizeof(ip));
   XC001_Config_FormatIp(XC001_NetConfig.netmask, mask, sizeof(mask));
@@ -170,48 +371,54 @@ static void send_index_page(int fd)
   send_response(fd, "text/html; charset=utf-8", s_http_page);
 }
 
-static void http_recv_rest(int fd, char *req, size_t req_size, int *len)
+static int http_recv_request(int fd, char *req, size_t req_size, int len)
 {
-  char *body;
-  char *cl;
-  int content_length = 0;
-  int header_len;
+  if (req == 0 || req_size < 2U || len <= 0 || (size_t)len >= req_size)
+  {
+    return -1;
+  }
 
-  if (req == 0 || len == 0 || *len <= 0)
+  for (;;)
   {
-    return;
-  }
-  req[*len] = '\0';
-  body = strstr(req, "\r\n\r\n");
-  if (body == 0)
-  {
-    return;
-  }
-  cl = strstr(req, "Content-Length:");
-  if (cl == 0)
-  {
-    cl = strstr(req, "content-length:");
-  }
-  if (cl == 0)
-  {
-    return;
-  }
-  content_length = atoi(cl + 15);
-  if (content_length <= 0)
-  {
-    return;
-  }
-  header_len = (int)((body + 4) - req);
-  while ((*len - header_len) < content_length && (size_t)(*len) < (req_size - 1U))
-  {
-    int room = (int)(req_size - 1U - (size_t)(*len));
-    int n = lwip_recv(fd, req + *len, room, 0);
+    char *body;
+    size_t expected = 0U;
+    int room;
+    int n;
+
+    req[len] = '\0';
+    body = strstr(req, "\r\n\r\n");
+    if (body != 0)
+    {
+      char content_length_text[16];
+      uint32_t content_length = 0UL;
+      size_t header_length = (size_t)((body + 4) - req);
+
+      if (header_value(req, "Content-Length", content_length_text,
+                       sizeof(content_length_text)) &&
+          !XC001_ParseU32(content_length_text,
+                          (uint32_t)(req_size - 1U - header_length), &content_length))
+      {
+        return -1;
+      }
+      expected = header_length + content_length;
+      if ((size_t)len >= expected)
+      {
+        req[expected] = '\0';
+        return (int)expected;
+      }
+    }
+
+    if ((size_t)len >= req_size - 1U)
+    {
+      return -1;
+    }
+    room = (int)(req_size - 1U - (size_t)len);
+    n = lwip_recv(fd, req + len, room, 0);
     if (n <= 0)
     {
-      break;
+      return -1;
     }
-    *len += n;
-    req[*len] = '\0';
+    len += n;
   }
 }
 
@@ -268,8 +475,16 @@ static void udp_thread(void *argument)
       int n = lwip_recvfrom(sock, rx, sizeof(rx) - 1U, 0, (struct sockaddr *)&peer, &peer_len);
       if (n > 0)
       {
+        char command[XC001_SCPI_LINE_SIZE];
         rx[n] = '\0';
-        XC001_SCPI_Execute(rx, tx, sizeof(tx));
+        if (remote_command(rx, 0, command, sizeof(command)))
+        {
+          XC001_SCPI_Execute(command, tx, sizeof(tx));
+        }
+        else
+        {
+          snprintf(tx, sizeof(tx), "ERR,-201,\"Authentication required\"");
+        }
         (void)lwip_sendto(sock, tx, strlen(tx), 0, (struct sockaddr *)&peer, peer_len);
       }
     }
@@ -282,6 +497,7 @@ static void handle_http(int fd, char *req)
   char method[8], path[256];
   char *query = 0;
   char *body_ptr;
+  char remote_key[32] = {0};
 
   if (sscanf(req, "%7s %255s", method, path) != 2)
   {
@@ -298,10 +514,18 @@ static void handle_http(int fd, char *req)
   {
     body_ptr += 4;
   }
+  (void)header_value(req, "X-XC001-Key", remote_key, sizeof(remote_key));
 
   if (strcmp(path, "/") == 0)
   {
-    send_index_page(fd);
+    if (XC001_StrCaseCmp(method, "GET") == 0)
+    {
+      send_index_page(fd);
+    }
+    else
+    {
+      send_error(fd, "Method not allowed");
+    }
   }
   else if (strcmp(path, "/favicon.ico") == 0)
   {
@@ -310,35 +534,48 @@ static void handle_http(int fd, char *req)
   else if (strcmp(path, "/api/config") == 0)
   {
     char body[256], ip[20], mask[20], gw[20];
-    if (query != 0)
+    if (XC001_StrCaseCmp(method, "POST") == 0)
     {
-      char ip_arg[24], mask_arg[24], gw_arg[24], port_arg[12], pwd_arg[24];
+      char ip_arg[24], mask_arg[24], gw_arg[24], port_arg[12];
       uint8_t ip_bin[4], mask_bin[4], gw_bin[4];
-      XC001_NetworkConfig active_cfg = XC001_NetConfig;
+      XC001_NetworkConfig candidate;
       uint16_t port;
-      if (!query_value(query, "pwd", pwd_arg, sizeof(pwd_arg)) ||
-          strcmp(pwd_arg, XC001_WEB_CONFIG_PASSWORD) != 0)
+
+      if (!remote_key_matches(remote_key))
       {
-        send_error(fd, "Invalid password");
+        send_unauthorized(fd);
         return;
       }
-      if (!query_value(query, "ip", ip_arg, sizeof(ip_arg)) ||
-          !query_value(query, "mask", mask_arg, sizeof(mask_arg)) ||
-          !query_value(query, "gw", gw_arg, sizeof(gw_arg)) ||
-          !query_value(query, "port", port_arg, sizeof(port_arg)) ||
+      if (body_ptr == 0 ||
+          !query_value(body_ptr, "ip", ip_arg, sizeof(ip_arg)) ||
+          !query_value(body_ptr, "mask", mask_arg, sizeof(mask_arg)) ||
+          !query_value(body_ptr, "gw", gw_arg, sizeof(gw_arg)) ||
+          !query_value(body_ptr, "port", port_arg, sizeof(port_arg)) ||
           !XC001_Config_ParseIp(ip_arg, ip_bin) ||
           !XC001_Config_ParseIp(mask_arg, mask_bin) ||
           !XC001_Config_ParseIp(gw_arg, gw_bin) ||
-          !XC001_ParseU16(port_arg, &port) ||
-          !XC001_Config_SetNetworkFull(ip_bin, mask_bin, gw_bin, port) ||
-          !XC001_Storage_Save(&XC001_NetConfig))
+          !XC001_ParseU16(port_arg, &port))
       {
-        XC001_NetConfig = active_cfg;
         send_error(fd, "Invalid network config");
         return;
       }
-      XC001_NetConfig = active_cfg;
+      memcpy(candidate.ip, ip_bin, sizeof(candidate.ip));
+      memcpy(candidate.netmask, mask_bin, sizeof(candidate.netmask));
+      memcpy(candidate.gateway, gw_bin, sizeof(candidate.gateway));
+      candidate.udp_port = port;
+      if (!XC001_Config_ValidateNetworkFull(candidate.ip, candidate.netmask,
+                                            candidate.gateway, candidate.udp_port) ||
+          !XC001_Storage_Save(&candidate))
+      {
+        send_error(fd, "Invalid network config");
+        return;
+      }
       send_response(fd, "text/plain; charset=utf-8", "OK,SAVED,REBOOT_REQUIRED");
+      return;
+    }
+    if (XC001_StrCaseCmp(method, "GET") != 0)
+    {
+      send_error(fd, "Method not allowed");
       return;
     }
     XC001_Config_FormatIp(XC001_NetConfig.ip, ip, sizeof(ip));
@@ -350,13 +587,14 @@ static void handle_http(int fd, char *req)
   else if (strcmp(path, "/api/cmd") == 0)
   {
     char cmd[XC001_SCPI_LINE_SIZE], reply[XC001_SCPI_REPLY_SIZE];
-    if (XC001_StrCaseCmp(method, "POST") == 0 && body_ptr != 0 && body_ptr[0] != '\0')
+    if (XC001_StrCaseCmp(method, "POST") != 0 || body_ptr == 0 || body_ptr[0] == '\0')
     {
-      snprintf(cmd, sizeof(cmd), "%s", body_ptr);
+      send_error(fd, "POST command body required");
+      return;
     }
-    else if (query == 0 || !query_value(query, "c", cmd, sizeof(cmd)))
+    if (!remote_command(body_ptr, remote_key, cmd, sizeof(cmd)))
     {
-      send_error(fd, "Missing command");
+      send_unauthorized(fd);
       return;
     }
     XC001_SCPI_Execute(cmd, reply, sizeof(reply));
@@ -420,9 +658,15 @@ static void http_thread(void *argument)
           uint32_t start_tick = osKernelGetTickCount();
           uint32_t elapsed;
           s_http_request_count++;
-          http_recv_rest(fd, req, sizeof(req), &n);
-          req[n] = '\0';
-          handle_http(fd, req);
+          n = http_recv_request(fd, req, sizeof(req), n);
+          if (n > 0)
+          {
+            handle_http(fd, req);
+          }
+          else
+          {
+            send_error(fd, "Incomplete or oversized request");
+          }
           elapsed = osKernelGetTickCount() - start_tick;
           s_http_last_ms = elapsed;
           if (elapsed > s_http_max_ms)
@@ -468,10 +712,18 @@ void XC001_Net_StartServices(void)
   if (s_udp_thread == 0)
   {
     s_udp_thread = osThreadNew(udp_thread, 0, &udp_attr);
+    if (s_udp_thread == 0)
+    {
+      XC001_Board_SetStatusOk(0U);
+    }
   }
   if (s_http_thread == 0)
   {
     s_http_thread = osThreadNew(http_thread, 0, &http_attr);
+    if (s_http_thread == 0)
+    {
+      XC001_Board_SetStatusOk(0U);
+    }
   }
 }
 
@@ -546,4 +798,20 @@ void XC001_Net_PhyDiag(char *out, uint32_t out_size)
            (unsigned long)HAL_ETH_GetDMAError(&heth),
            (unsigned long)heth.Instance->DMACSR,
            (unsigned long)heth.Instance->MACMDIOAR);
+}
+
+void XC001_Net_FormatMac(char *out, size_t out_size)
+{
+  if (out == 0 || out_size == 0U)
+  {
+    return;
+  }
+  if (gnetif.hwaddr_len != 6U)
+  {
+    snprintf(out, out_size, "UNAVAILABLE");
+    return;
+  }
+  snprintf(out, out_size, "%02X:%02X:%02X:%02X:%02X:%02X",
+           gnetif.hwaddr[0], gnetif.hwaddr[1], gnetif.hwaddr[2],
+           gnetif.hwaddr[3], gnetif.hwaddr[4], gnetif.hwaddr[5]);
 }
