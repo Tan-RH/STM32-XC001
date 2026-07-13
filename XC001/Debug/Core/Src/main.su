@@ -1,4 +1,5 @@
-../Core/Src/main.c:72:5:main	24	static,ignoring_inline_asm
-../Core/Src/main.c:134:6:SystemClock_Config	120	static
-../Core/Src/main.c:194:6:MPU_Config	24	static
-../Core/Src/main.c:241:6:Error_Handler	56	static,ignoring_inline_asm
+../Core/Src/main.c:68:13:XC001_DebugAttachWindow	8	static
+../Core/Src/main.c:94:5:main	24	static
+../Core/Src/main.c:159:6:SystemClock_Config	120	static
+../Core/Src/main.c:219:6:MPU_Config	24	static
+../Core/Src/main.c:266:6:Error_Handler	56	static

@@ -1,0 +1,6 @@
+# Included by CubeIDE-generated Debug/makefile before Debug/**/subdir.mk files.
+# Keep command-line builds compatible when CubeIDE emits compiler options that
+# the installed arm-none-eabi-gcc does not support.
+
+PYTHON ?= python
+$(shell $(PYTHON) ../Tools/sanitize_cube_makefiles.py . --quiet)

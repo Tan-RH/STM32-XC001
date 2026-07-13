@@ -1,3 +1,0 @@
-../Core/Src/xc001_spi_bus.c:9:6:XC001_SPIBus_Init	3
-../Core/Src/xc001_spi_bus.c:30:9:XC001_SPIBus_Transfer	6
-../Core/Src/xc001_spi_bus.c:44:6:XC001_SPIBus_Status	1

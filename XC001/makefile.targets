@@ -1,0 +1,18 @@
+.PHONY: versioned-firmware factory-firmware
+
+PYTHON ?= python
+XC001_BUILD_FACTORY ?= 1
+XC001_APP_BUILD_DIR := $(notdir $(CURDIR))
+XC001_APP_HEX_FOR_BOOTLOADER := ../$(XC001_APP_BUILD_DIR)/XC001.hex
+
+versioned-firmware: XC001.hex XC001.bin
+	$(PYTHON) ../Tools/package_firmware.py .
+
+factory-firmware: versioned-firmware
+	$(MAKE) -C ../Bootloader factory APP_HEX=$(XC001_APP_HEX_FOR_BOOTLOADER)
+
+ifeq ($(XC001_BUILD_FACTORY),1)
+secondary-outputs: versioned-firmware factory-firmware
+else
+secondary-outputs: versioned-firmware
+endif

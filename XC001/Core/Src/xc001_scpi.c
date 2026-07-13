@@ -50,7 +50,7 @@ static uint8_t save_network_candidate(const uint8_t ip[4], const uint8_t mask[4]
 uint8_t XC001_SCPI_IsReadOnly(const char *command)
 {
   static const char *const exact_commands[] = {
-    "*IDN?", "IDN?", "PING?", "SYST:ERR?", "SYST:HELP?", "STAT?",
+    "*IDN?", "IDN?", "PING?", "*STB?", "*OPC?", "*WAI", "SYST:ERR?", "SYST:ERR:NEXT?", "SYST:ERR:COUN?", "SYST:ERR:COUNT?", "SYSTEM:ERROR?", "SYSTEM:ERROR:NEXT?", "SYSTEM:ERROR:COUNT?", "SYST:HELP?", "STAT?",
     "NET:STAT?", "NET:DIAG?", "ND?", "NET:PHY?", "NET:IP?",
     "NET:MASK?", "NET:GATE?", "NET:PORT?", "NET:MAC?", "DIG:LIST?",
     "CAN:STAT?", "CAN:RX?", "RS485:STAT?", "RS485:RX?", "SPI:STAT?"
@@ -139,14 +139,35 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
     XC001_Board_Init();
     snprintf(reply, reply_size, "OK");
   }
-  else if (XC001_StrCaseCmp(cmd, "SYST:ERR?") == 0)
+  else if (XC001_StrCaseCmp(cmd, "*STB?") == 0)
+  {
+    snprintf(reply, reply_size, "0");
+  }
+  else if (XC001_StrCaseCmp(cmd, "*OPC?") == 0)
+  {
+    snprintf(reply, reply_size, "1");
+  }
+  else if (XC001_StrCaseCmp(cmd, "*WAI") == 0)
+  {
+    snprintf(reply, reply_size, "OK");
+  }
+  else if (XC001_StrCaseCmp(cmd, "SYST:ERR?") == 0 ||
+           XC001_StrCaseCmp(cmd, "SYST:ERR:NEXT?") == 0 ||
+           XC001_StrCaseCmp(cmd, "SYSTEM:ERROR?") == 0 ||
+           XC001_StrCaseCmp(cmd, "SYSTEM:ERROR:NEXT?") == 0)
   {
     snprintf(reply, reply_size, "0,\"No error\"");
+  }
+  else if (XC001_StrCaseCmp(cmd, "SYST:ERR:COUN?") == 0 ||
+           XC001_StrCaseCmp(cmd, "SYST:ERR:COUNT?") == 0 ||
+           XC001_StrCaseCmp(cmd, "SYSTEM:ERROR:COUNT?") == 0)
+  {
+    snprintf(reply, reply_size, "0");
   }
   else if (XC001_StrCaseCmp(cmd, "SYST:HELP?") == 0)
   {
     snprintf(reply, reply_size,
-             "*IDN?,PING?,*RST,*CLS,SYST:ERR?,STAT?,NET:STAT?,NET:DIAG?,NET:PHY?,NET:IP?,NET:IP a.b.c.d,NET:MASK?,NET:MASK a.b.c.d,NET:GATE?,NET:GATE a.b.c.d,NET:PORT?,NET:PORT n,NET:SERV ON,DIG:LIST?,DIG:OUTP pin,val,DIG:OUTP? pin,CAN:STAT?,CAN:SEND id,hex,CAN:RX?,RS485:STAT?,RS485:SEND text,RS485:RX?,SPI:STAT?,SPI:TRAN? hex");
+             "*IDN?,PING?,*RST,*CLS,*STB?,*OPC?,*WAI,SYST:ERR?,SYST:ERR:NEXT?,SYST:ERR:COUN?,STAT?,NET:STAT?,NET:DIAG?,NET:PHY?,NET:IP?,NET:IP a.b.c.d,NET:MASK?,NET:MASK a.b.c.d,NET:GATE?,NET:GATE a.b.c.d,NET:PORT?,NET:PORT n,NET:SERV ON,DIG:LIST?,DIG:OUTP pin,val,DIG:OUTP? pin,CAN:STAT?,CAN:SEND id,hex,CAN:RX?,RS485:STAT?,RS485:SEND text,RS485:RX?,SPI:STAT?,SPI:TRAN? hex");
   }
   else if (XC001_StrCaseCmp(cmd, "STAT?") == 0)
   {

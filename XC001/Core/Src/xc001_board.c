@@ -74,8 +74,15 @@ void XC001_Board_SetStatusOk(uint8_t ok)
 
 void XC001_Board_WatchdogInit(void)
 {
-#if !defined(DEBUG)
+#if (XC001_WATCHDOG_ENABLE != 0U) && !defined(DEBUG)
   uint32_t timeout = 1000000UL;
+
+#if defined(__HAL_RCC_DBGMCU_CLK_ENABLE)
+  __HAL_RCC_DBGMCU_CLK_ENABLE();
+#endif
+#if defined(__HAL_DBGMCU_FREEZE_IWDG1)
+  __HAL_DBGMCU_FREEZE_IWDG1();
+#endif
 
   RCC->CSR |= RCC_CSR_LSION;
   while ((RCC->CSR & RCC_CSR_LSIRDY) == 0U && timeout > 0U)

@@ -137,6 +137,13 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void vApplicationIdleHook(void)
+{
+  __DSB();
+  __WFI();
+  __ISB();
+}
+
 void vApplicationMallocFailedHook(void)
 {
   const uint8_t msg[] = "\r\n[RTOS] Malloc failed\r\n";

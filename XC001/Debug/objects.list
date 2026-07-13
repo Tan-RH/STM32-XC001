@@ -14,6 +14,7 @@
 "./Core/Src/xc001_can.o"
 "./Core/Src/xc001_config.o"
 "./Core/Src/xc001_console.o"
+"./Core/Src/xc001_multipart.o"
 "./Core/Src/xc001_net.o"
 "./Core/Src/xc001_rs485.o"
 "./Core/Src/xc001_scpi.o"

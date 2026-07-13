@@ -95,7 +95,7 @@ def build_pdf():
     styles.add(ParagraphStyle("CodeCN", fontName="CN", fontSize=8.6, leading=12, textColor=colors.HexColor("#111827")))
 
     commands = [
-        ("通用指令", "*IDN?", "查询设备标识。兼容 IDN?。", "XC001,CONTROL-BOARD,H743,V1.0", "查询"),
+        ("通用指令", "*IDN?", "查询设备标识。兼容 IDN?。", "XC001,CONTROL-BOARD,H743,V1.1.0", "查询"),
         ("通用指令", "PING?", "通信链路测试，用于确认 UART7、UDP 或网页通道可用。", "PONG", "查询"),
         ("通用指令", "*CLS", "清除当前状态/错误标志。当前固件返回 OK。", "OK", "设置"),
         ("通用指令", "*RST", "重新初始化业务板级 IO，扩展 IO 恢复默认输出状态。", "OK", "设置"),
@@ -135,13 +135,13 @@ def build_pdf():
     story.append(p("SCPI 指令表（内部开发用）", styles["TitleCN"]))
     story.append(Spacer(1, 8 * mm))
     story.append(p("适用固件：STM32H743 / HAL / FreeRTOS / LwIP", styles["SubTitleCN"]))
-    story.append(p(f"文档版本：V1.0　生成日期：{date.today().isoformat()}", styles["SubTitleCN"]))
+    story.append(p(f"文档版本：V1.1.0　生成日期：{date.today().isoformat()}", styles["SubTitleCN"]))
     story.append(PageBreak())
 
     story.append(p("1. 修订记录", styles["H1CN"]))
     rev = [
         [p("版本", styles["BodyCN"]), p("日期", styles["BodyCN"]), p("说明", styles["BodyCN"])],
-        [p("V1.1", styles["BodyCN"]), p(date.today().isoformat(), styles["BodyCN"]), p("增加设备唯一 MAC、远程写入鉴权和可靠配置存储说明。", styles["BodyCN"])],
+        [p("V1.1.0", styles["BodyCN"]), p(date.today().isoformat(), styles["BodyCN"]), p("增加软件版本显示、网页 BIN 升级、Stage0 和恢复 Bootloader。", styles["BodyCN"])],
     ]
     story.append(table(rev, [25 * mm, 35 * mm, 120 * mm]))
 
@@ -200,13 +200,14 @@ def build_pdf():
         [p("/api/cmd", styles["CodeCN"]), p("POST", styles["BodyCN"]), p("请求体为 SCPI 指令；写入类指令需要 X-XC001-Key 请求头。", styles["BodyCN"])],
         [p("/api/config", styles["CodeCN"]), p("GET", styles["BodyCN"]), p("无参数时读取当前运行网络配置。", styles["BodyCN"])],
         [p("/api/config", styles["CodeCN"]), p("POST", styles["BodyCN"]), p("表单正文包含 ip、mask、gw、port，并使用 X-XC001-Key 鉴权。", styles["BodyCN"])],
+        [p("/api/firmware", styles["CodeCN"]), p("POST", styles["BodyCN"]), p("上传主程序 BIN；验证长度、向量和 CRC32 后自动重启升级。", styles["BodyCN"])],
     ]
     story.append(table(http_data, [62 * mm, 22 * mm, 96 * mm]))
 
     story.append(p("8. 使用示例", styles["H1CN"]))
     examples = [
         [p("目标", styles["BodyCN"]), p("示例指令", styles["BodyCN"]), p("预期返回", styles["BodyCN"])],
-        [p("查询设备", styles["BodyCN"]), p("*IDN?", styles["CodeCN"]), p("XC001,CONTROL-BOARD,H743,V1.0", styles["CodeCN"])],
+        [p("查询设备", styles["BodyCN"]), p("*IDN?", styles["CodeCN"]), p("XC001,CONTROL-BOARD,H743,V1.1.0", styles["CodeCN"])],
         [p("修改 IP", styles["BodyCN"]), p("NET:IP 192.168.1.20", styles["CodeCN"]), p("OK,SAVED,REBOOT_REQUIRED", styles["CodeCN"])],
         [p("设置 PE4 高电平", styles["BodyCN"]), p("DIG:OUTP PE4,1", styles["CodeCN"]), p("OK", styles["CodeCN"])],
         [p("发送 CAN 帧", styles["BodyCN"]), p("CAN:SEND 0x123,11223344", styles["CodeCN"]), p("OK", styles["CodeCN"])],

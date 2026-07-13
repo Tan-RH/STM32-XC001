@@ -21,6 +21,7 @@
 #include "fdcan.h"
 
 /* USER CODE BEGIN 0 */
+#include "xc001_board.h"
 
 /* USER CODE END 0 */
 
@@ -67,7 +68,8 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
@@ -92,7 +94,8 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* fdcanHandle)
     PeriphClkInitStruct.FdcanClockSelection = RCC_FDCANCLKSOURCE_PLL;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
-      Error_Handler();
+      XC001_Board_SetStatusOk(0U);
+      return;
     }
 
     /* FDCAN1 clock enable */

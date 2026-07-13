@@ -38,7 +38,7 @@ Core/Src/xc001_net.o: ../Core/Src/xc001_net.c ../Core/Inc/xc001_net.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
- ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h \
+ ../Core/Inc/xc001_multipart.h ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/sockets.h \
  ../Middlewares/Third_Party/LwIP/src/include/lwip/opt.h \
  ../LWIP/Target/lwipopts.h ../Core/Inc/main.h \
@@ -130,6 +130,7 @@ Core/Src/xc001_net.o: ../Core/Src/xc001_net.c ../Core/Inc/xc001_net.h \
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi_ex.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h:
 ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h:
+../Core/Inc/xc001_multipart.h:
 ../Drivers/CMSIS/RTOS2/Include/cmsis_os2.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/sockets.h:
 ../Middlewares/Third_Party/LwIP/src/include/lwip/opt.h:

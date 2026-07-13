@@ -1,4 +1,0 @@
-../Core/Src/xc001_app.c:13:13:app_print_network_url	1
-../Core/Src/xc001_app.c:31:6:XC001_APP_PreLwipInit	4
-../Core/Src/xc001_app.c:61:6:XC001_APP_Init	1
-../Core/Src/xc001_app.c:74:6:XC001_APP_Task	1

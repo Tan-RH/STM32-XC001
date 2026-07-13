@@ -32,7 +32,7 @@ ol { padding-left:24px; }
 <tr><td>制造商</td><td>GeneralTest</td></tr>
 <tr><td>型号</td><td>XC001 CONTROL-BOARD</td></tr>
 <tr><td>MCU</td><td>STM32H743</td></tr>
-<tr><td>固件版本</td><td>V1.0</td></tr>
+<tr><td>软件版本</td><td>V1.1.0</td></tr>
 <tr><td>默认 IP</td><td>192.168.1.10</td></tr>
 <tr><td>默认 UDP 端口</td><td>4000</td></tr>
 <tr><td>HTTP 端口</td><td>80</td></tr>
@@ -67,7 +67,7 @@ PING?      # 通信测试
 STAT?      # 查询综合状态
 *RST       # 重新初始化业务 IO</code></pre>
 <h3>返回示例</h3>
-<pre><code>XC001,CONTROL-BOARD,H743,V1.0
+<pre><code>XC001,CONTROL-BOARD,H743,V1.1.0
 PONG
 OK</code></pre>
 <h2>系统指令</h2>
@@ -196,6 +196,8 @@ FFFFFF</code></pre>
 <tr><td><code>/api/cmd</code></td><td>POST</td><td>请求体为 SCPI 指令文本；写入类指令需要 <code>X-XC001-Key</code> 请求头</td></tr>
 <tr><td><code>/api/config</code></td><td>GET</td><td>无参数时读取当前运行网络配置</td></tr>
 <tr><td><code>/api/config</code></td><td>POST</td><td>表单正文包含 <code>ip</code>、<code>mask</code>、<code>gw</code>、<code>port</code>，并通过 <code>X-XC001-Key</code> 请求头鉴权；保存后重启生效</td></tr>
+<tr><td><code>/api/firmware</code></td><td>POST</td><td>请求体为主程序 <code>.bin</code> 原始内容，使用 <code>X-XC001-Key</code> 鉴权；校验成功后自动重启升级</td></tr>
+<tr><td><code>/api/firmware/status</code></td><td>GET</td><td>读取设备端升级阶段、百分比、已接收字节数、文件总字节数和当前软件版本</td></tr>
 </tbody></table>
 <h3>示例</h3>
 <pre><code>POST /api/cmd
@@ -207,6 +209,35 @@ X-XC001-Key: XC1234567890ABCDEF
 Content-Type: application/x-www-form-urlencoded
 
 ip=192.168.1.20&amp;mask=255.255.255.0&amp;gw=192.168.1.1&amp;port=4000</code></pre>
+<h2>网页固件升级</h2>
+<p>网页首页显示当前软件版本，并提供 <code>.bin</code> 文件选择、设备端实时进度和升级状态。进度依次显示暂存区擦除、接收并写入、固件校验以及重启安装阶段。</p>
+<h3>首次安装</h3>
+<p>网页升级依赖两个常驻组件。首次启用时，推荐通过 ST-Link 等外部下载器直接烧录：</p>
+<p>- <code>Bootloader/build/XC001_Factory.hex</code></p>
+<p>该 Factory HEX 已合并 Stage0、主程序和 Recovery Bootloader，因此不需要再单独烧录 <code>bootloader.hex</code>。只有需要分区调试或手动烧录时，才分别烧录：</p>
+<p>新板首次烧录步骤：</p>
+<p>1. 通过 SWD 连接 ST-Link，并给目标板正常供电。</p>
+<p>2. 打开 STM32CubeProgrammer，选择 ST-Link 并连接目标 MCU。</p>
+<p>3. 对全新板执行一次 Full chip erase（整片擦除）。</p>
+<p>4. 打开 <code>Bootloader/build/XC001_Factory.hex</code>，勾选下载后校验并执行 Download。</p>
+<p>5. 校验成功后复位或重新上电，通过 UART7 启动日志确认版本、设备写入密钥和网络初始化状态。</p>
+<p>6. 使用默认地址 <code>192.168.1.10</code> 访问网页；若电脑不在同一网段，先临时配置同网段静态 IP。</p>
+<p>如果不使用 Factory HEX，分区调试时才按以下三个文件分别烧录：</p>
+<p>1. <code>Bootloader/build/XC001_Stage0.hex</code>，地址 <code>0x08000000</code>。</p>
+<p>2. <code>Bootloader/build/XC001_Recovery.hex</code>，地址 <code>0x081E0000</code>。</p>
+<p>3. <code>Bootloader/build/XC001_Application_V1.1.0.hex</code>（或当前版本的应用 HEX），链接地址为 <code>0x08020000</code>。</p>
+<p>常驻组件可通过以下命令构建：</p>
+<pre><code>make -C Bootloader all</code></pre>
+<p>完成首次安装后，不要再使用“整片擦除”，否则会删除 Stage0 和 Recovery Bootloader。</p>
+<h3>网页升级步骤</h3>
+<p>1. 使用当前工程生成主程序 <code>.bin</code>，文件大小不得超过 655360 bytes。</p>
+<p>2. 打开设备网页，确认页面上的当前软件版本。</p>
+<p>3. 在“固件升级”区域输入 UART7 启动日志中的设备写入密钥。</p>
+<p>4. 选择主程序 <code>.bin</code>，点击“上传并升级”。</p>
+<p>5. 网页实时显示设备擦除、接收/写入、校验和重启状态；设备重新联网后页面显示当前版本号。</p>
+<p>升级文件会先写入 Bank2 暂存区，并检查长度、向量表和 CRC32。断电发生在上传或主程序复制期间时，Stage0 会保留恢复入口，下一次上电由 Recovery Bootloader 重新执行复制。</p>
+<p>设备重启后，Recovery Bootloader 将暂存固件复制到主程序区。此时网络服务尚未启动，网页会显示“设备正在重启并安装”，无法提供复制过程中的逐字节进度；主程序启动并恢复网络后，网页会自动确认设备上线和版本号。</p>
+<blockquote>旧版链接地址为 <code>0x08000000</code> 的 <code>.bin</code> 会被拒绝。只能上传启用本升级布局后重新构建的主程序 <code>.bin</code>。</blockquote>
 <h2>指示灯状态</h2>
 <table><thead><tr><th>引脚</th><th>状态</th><th>说明</th></tr></thead><tbody>
 <tr><td>PB1 / LED1</td><td>周期闪烁</td><td>运行状态指示灯。闪烁周期由 <code>XC001_STATUS_BLINK_MS</code> 配置。</td></tr>
@@ -219,5 +250,6 @@ ip=192.168.1.20&amp;mask=255.255.255.0&amp;gw=192.168.1.1&amp;port=4000</code></
 <p>4. 修改网络参数后，当前运行网络不会立即切换；请重新上电或复位后使用新地址访问。</p>
 <p>5. 设置类指令若参数非法，通常返回 <code>ERR,-222,"Invalid ..."</code>。</p>
 <p>6. 文档中的 <code>XC1234567890ABCDEF</code> 仅为格式示例，实际密钥以设备 UART7 启动日志为准。</p>
+<p>7. 在线升级目前提供完整性校验和断电恢复，但不包含数字签名；生产环境仍应限制升级密钥和管理网络访问权限。</p>
 </body>
 </html>

@@ -1,5 +1,0 @@
-../Core/Src/xc001_scpi.c:20:6:XC001_SCPI_Init	3
-../Core/Src/xc001_scpi.c:33:16:save_network_candidate	2
-../Core/Src/xc001_scpi.c:50:9:XC001_SCPI_IsReadOnly	5
-../Core/Src/xc001_scpi.c:77:13:reply_net_config	1
-../Core/Src/xc001_scpi.c:88:6:XC001_SCPI_Execute	65

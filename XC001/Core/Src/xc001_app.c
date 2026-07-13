@@ -34,6 +34,10 @@ void XC001_APP_PreLwipInit(void)
 
   XC001_Config_LoadDefaults();
   XC001_Storage_Init();
+  if (XC001_Storage_ConfirmRunningFirmware() == 0U)
+  {
+    XC001_Board_SetStatusOk(0U);
+  }
   XC001_SCPI_Init();
   reset_net_cfg = XC001_Board_IsEthResetPressed();
   if (reset_net_cfg != 0U)

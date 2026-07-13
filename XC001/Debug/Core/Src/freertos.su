@@ -1,4 +1,5 @@
 ../Core/Src/freertos.c:77:6:MX_FREERTOS_Init	8	static
 ../Core/Src/freertos.c:119:6:StartDefaultTask	16	static
-../Core/Src/freertos.c:140:6:vApplicationMallocFailedHook	48	static,ignoring_inline_asm
-../Core/Src/freertos.c:150:6:vApplicationStackOverflowHook	56	static,ignoring_inline_asm
+../Core/Src/freertos.c:140:6:vApplicationIdleHook	4	static,ignoring_inline_asm
+../Core/Src/freertos.c:147:6:vApplicationMallocFailedHook	48	static,ignoring_inline_asm
+../Core/Src/freertos.c:157:6:vApplicationStackOverflowHook	56	static,ignoring_inline_asm

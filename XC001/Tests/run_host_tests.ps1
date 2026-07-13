@@ -7,6 +7,7 @@ $output = Join-Path $env:TEMP "xc001_parser_tests.exe"
   -std=c11 -Wall -Wextra -Werror `
   "-I$projectRoot\Core\Inc" `
   "$PSScriptRoot\test_parsers.c" `
+  "$projectRoot\Core\Src\xc001_multipart.c" `
   "$projectRoot\Core\Src\xc001_config.c" `
   "$projectRoot\Core\Src\xc001_utils.c" `
   -o $output

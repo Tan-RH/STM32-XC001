@@ -21,6 +21,7 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#include "xc001_board.h"
 
 /* USER CODE END 0 */
 
@@ -51,19 +52,23 @@ void MX_UART7_Init(void)
   huart7.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
   if (HAL_UART_Init(&huart7) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   if (HAL_UARTEx_SetTxFifoThreshold(&huart7, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   if (HAL_UARTEx_SetRxFifoThreshold(&huart7, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   if (HAL_UARTEx_DisableFifoMode(&huart7) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   /* USER CODE BEGIN UART7_Init 2 */
 
@@ -94,19 +99,23 @@ void MX_UART8_Init(void)
   huart8.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
   if (HAL_UART_Init(&huart8) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   if (HAL_UARTEx_SetTxFifoThreshold(&huart8, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   if (HAL_UARTEx_SetRxFifoThreshold(&huart8, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   if (HAL_UARTEx_DisableFifoMode(&huart8) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   /* USER CODE BEGIN UART8_Init 2 */
 
@@ -131,7 +140,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     PeriphClkInitStruct.Usart234578ClockSelection = RCC_USART234578CLKSOURCE_D2PCLK1;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
-      Error_Handler();
+      XC001_Board_SetStatusOk(0U);
+      return;
     }
 
     /* UART7 clock enable */
@@ -175,7 +185,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     PeriphClkInitStruct.Usart234578ClockSelection = RCC_USART234578CLKSOURCE_D2PCLK1;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
-      Error_Handler();
+      XC001_Board_SetStatusOk(0U);
+      return;
     }
 
     /* UART8 clock enable */

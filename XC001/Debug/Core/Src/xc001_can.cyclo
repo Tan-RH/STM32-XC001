@@ -1,7 +1,0 @@
-../Core/Src/xc001_can.c:17:17:dlc_from_len	1
-../Core/Src/xc001_can.c:27:16:len_from_dlc	2
-../Core/Src/xc001_can.c:36:6:XC001_CAN_Init	6
-../Core/Src/xc001_can.c:78:6:XC001_CAN_Task	5
-../Core/Src/xc001_can.c:99:9:XC001_CAN_Send	7
-../Core/Src/xc001_can.c:126:6:XC001_CAN_Status	1
-../Core/Src/xc001_can.c:141:6:XC001_CAN_LastRx	2

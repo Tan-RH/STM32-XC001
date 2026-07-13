@@ -390,7 +390,9 @@ static void low_level_init(struct netif *netif)
   else
   {
     XC001_Board_SetStatusOk(0U);
-    Error_Handler();
+    netif_set_link_down(netif);
+    netif_set_down(netif);
+    return;
   }
 #endif /* LWIP_ARP || LWIP_ETHERNET */
 

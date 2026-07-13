@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define XC001_DEVICE_ID          "XC001,CONTROL-BOARD,H743,V1.0"
+#define XC001_SOFTWARE_VERSION   "V1.3.1"
+#define XC001_DEVICE_ID          "XC001,CONTROL-BOARD,H743," XC001_SOFTWARE_VERSION
 #define XC001_DEFAULT_IP0        192U
 #define XC001_DEFAULT_IP1        168U
 #define XC001_DEFAULT_IP2        1U
@@ -21,6 +22,16 @@
 #define XC001_HTTP_PORT          80U
 #define XC001_STATUS_BLINK_MS    250U
 #define XC001_NET_SERVICES_AUTOSTART 1U
+
+/* Keep a short window after reset so ST-LINK/CubeProgrammer can attach again
+ * after flashing without requiring the user to hold NRST manually.
+ * Set to 0U for production builds that need the fastest boot. */
+#define XC001_DEBUG_ATTACH_DELAY_MS 0U
+
+/* IWDG is disabled by default while the bootloader/web-upgrade path is being
+ * commissioned. Re-enable only after the firmware is stable and the debugger
+ * is configured for connect-under-reset. */
+#define XC001_WATCHDOG_ENABLE    0U
 
 #define XC001_SCPI_LINE_SIZE     192U
 #define XC001_SCPI_REPLY_SIZE    384U

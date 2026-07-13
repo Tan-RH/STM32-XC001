@@ -21,6 +21,7 @@
 #include "spi.h"
 
 /* USER CODE BEGIN 0 */
+#include "xc001_board.h"
 
 /* USER CODE END 0 */
 
@@ -61,7 +62,8 @@ void MX_SPI5_Init(void)
   hspi5.Init.IOSwap = SPI_IO_SWAP_DISABLE;
   if (HAL_SPI_Init(&hspi5) != HAL_OK)
   {
-    Error_Handler();
+    XC001_Board_SetStatusOk(0U);
+    return;
   }
   /* USER CODE BEGIN SPI5_Init 2 */
 
@@ -86,7 +88,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_D2PCLK1;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
-      Error_Handler();
+      XC001_Board_SetStatusOk(0U);
+      return;
     }
 
     /* SPI5 clock enable */

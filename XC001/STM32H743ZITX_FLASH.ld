@@ -6,8 +6,10 @@
 **  Author      : STM32CubeIDE
 **
 **  Abstract    : Linker script for STM32H7 series
-**                1792Kbytes application FLASH, 256Kbytes configuration FLASH,
-**                and 1056Kbytes RAM
+**                Application image at 0x08020000 (Bank1 sectors 1-5).
+**                Bank1 sector 0 is reserved for Stage0; Bank2 stores the
+**                upload staging image, update metadata, configuration and
+**                the recovery bootloader.
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -44,8 +46,7 @@ _Min_Stack_Size = 0x1000; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-  /* Bank 2 sectors 6-7 (0x081C0000-0x081FFFFF) are reserved for configuration. */
-  FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 1792K
+  FLASH (rx)     : ORIGIN = 0x08020000, LENGTH = 640K
   DTCMRAM (xrw)  : ORIGIN = 0x20000000, LENGTH = 128K
   RAM_D1 (xrw)   : ORIGIN = 0x24000000, LENGTH = 512K
   RAM_D2 (xrw)   : ORIGIN = 0x30000000, LENGTH = 288K

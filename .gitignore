@@ -1,6 +1,7 @@
 # STM32CubeIDE generated build output
 XC001/Debug/
 XC001/Release/
+XC001/Bootloader/build/
 
 # Local IDE and temporary files
 *.launch

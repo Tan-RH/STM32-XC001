@@ -28,6 +28,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "xc001_config.h"
+#include "xc001_update.h"
 
 /* USER CODE END Includes */
 
@@ -57,11 +59,31 @@ void SystemClock_Config(void);
 static void MPU_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
+static void XC001_DebugAttachWindow(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void XC001_DebugAttachWindow(void)
+{
+#if defined(__HAL_RCC_DBGMCU_CLK_ENABLE)
+  __HAL_RCC_DBGMCU_CLK_ENABLE();
+#endif
+  HAL_DBGMCU_EnableDBGSleepMode();
+  HAL_DBGMCU_EnableDBGStopMode();
+  HAL_DBGMCU_EnableDBGStandbyMode();
+#if defined(__HAL_DBGMCU_FREEZE_IWDG1)
+  __HAL_DBGMCU_FREEZE_IWDG1();
+#endif
+#if defined(__HAL_DBGMCU_FREEZE_WWDG1)
+  __HAL_DBGMCU_FREEZE_WWDG1();
+#endif
+
+#if (XC001_DEBUG_ATTACH_DELAY_MS > 0U)
+  HAL_Delay(XC001_DEBUG_ATTACH_DELAY_MS);
+#endif
+}
 
 /* USER CODE END 0 */
 
@@ -73,6 +95,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  SCB->VTOR = XC001_APPLICATION_ADDRESS;
 
   /* USER CODE END 1 */
 
@@ -85,6 +108,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  __enable_irq();
+  XC001_DebugAttachWindow();
   SCB_EnableICache();
   SCB_EnableDCache();
 
@@ -242,11 +267,26 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+  RCC->AHB4ENR |= RCC_AHB4ENR_GPIOBEN;
+  (void)RCC->AHB4ENR;
+  GPIOB->MODER = (GPIOB->MODER & ~(3UL << (2U * 2U))) | (1UL << (2U * 2U));
+  GPIOB->OTYPER &= ~(1UL << 2U);
+  GPIOB->OSPEEDR &= ~(3UL << (2U * 2U));
+  GPIOB->PUPDR &= ~(3UL << (2U * 2U));
+  GPIOB->BSRR = (1UL << (2U + 16U));
   const uint8_t msg[] = "\r\n[ERROR] Error_Handler entered\r\n";
-  HAL_UART_Transmit(&huart7, (uint8_t *)msg, sizeof(msg) - 1U, 100);
+  if (huart7.Instance == UART7)
+  {
+    (void)HAL_UART_Transmit(&huart7, (uint8_t *)msg, sizeof(msg) - 1U, 100);
+  }
   __disable_irq();
   while (1)
   {
+    for (volatile uint32_t i = 0U; i < 300000UL; i++)
+    {
+      __NOP();
+    }
+    GPIOB->ODR ^= GPIO_PIN_2;
   }
   /* USER CODE END Error_Handler_Debug */
 }
