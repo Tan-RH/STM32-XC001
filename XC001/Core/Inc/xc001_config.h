@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define XC001_SOFTWARE_VERSION   "V1.3.1"
+#define XC001_SOFTWARE_VERSION   "V1.3.6"
 #define XC001_DEVICE_ID          "XC001,CONTROL-BOARD,H743," XC001_SOFTWARE_VERSION
+
+/* 240 MHz core / 120 MHz peripheral buses. This substantially reduces the
+ * idle power while preserving Ethernet, FDCAN and UART peripheral clocks. */
+#define XC001_LOW_POWER_PROFILE  1U
 #define XC001_DEFAULT_IP0        192U
 #define XC001_DEFAULT_IP1        168U
 #define XC001_DEFAULT_IP2        1U
@@ -21,6 +25,7 @@
 #define XC001_DEFAULT_UDP_PORT   4000U
 #define XC001_HTTP_PORT          80U
 #define XC001_STATUS_BLINK_MS    250U
+#define XC001_COMMAND_ERROR_MS   2000U
 #define XC001_NET_SERVICES_AUTOSTART 1U
 
 /* Keep a short window after reset so ST-LINK/CubeProgrammer can attach again
@@ -37,6 +42,11 @@
 #define XC001_SCPI_REPLY_SIZE    384U
 #define XC001_NET_RX_SIZE        256U
 #define XC001_HTTP_RX_SIZE       1024U
+
+/* PF7/PF8/PF9 are used as RF switch V1/V2/V3 control lines in this hardware
+ * revision, so the former SPI5 bus on these pins must stay disabled at the
+ * application layer. */
+#define XC001_SPI5_BUS_ENABLE    0U
 
 typedef struct
 {

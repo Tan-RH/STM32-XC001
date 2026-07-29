@@ -369,7 +369,8 @@ static void send_response(int fd, const char *type, const char *body)
   char hdr[160];
   size_t body_len = strlen(body);
   int n = snprintf(hdr, sizeof(hdr),
-                   "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\nContent-Length: %lu\r\n\r\n",
+                   "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nCache-Control: no-store\r\n"
+                   "Connection: close\r\nContent-Length: %lu\r\n\r\n",
                    type, (unsigned long)body_len);
   if (n > 0 && (size_t)n < sizeof(hdr))
   {
@@ -456,10 +457,10 @@ static void send_index_page(int fd)
     "<div class=card><div class=k>&#32593;&#20851;</div><div class=v>%s</div></div>"
     "<div class=card><div class=k>HTTP</div><div class=v>%u</div></div>"
     "<div class=card><div class=k>UDP</div><div class=v>%u</div></div>"
-    "</div><section class=panel><h2>SCPI &#25351;&#20196;</h2><textarea id=cmd>*IDN?</textarea><div><button onclick=sendCmd()>&#21457;&#36865;</button><button class=g onclick=\"run('STAT?')\">STAT?</button><button class=g onclick=\"run('ND?')\">ND?</button><button class=g onclick=\"run('NET:STAT?')\">NET:STAT?</button><button class=g onclick=\"run('CAN:STAT?')\">CAN</button><button class=g onclick=\"run('CAN:RX?')\">CAN RX</button><button class=g onclick=\"run('RS485:STAT?')\">485</button><button class=g onclick=\"run('RS485:RX?')\">485 RX</button><button class=g onclick=\"run('SYST:HELP?')\">HELP</button></div><pre id=out>Ready.</pre></section>"
+    "</div><section class=panel><h2>SCPI &#25351;&#20196;</h2><textarea id=cmd>*IDN?</textarea><div><button onclick=sendCmd()>&#21457;&#36865;</button><button class=g onclick=\"run('STAT?')\">STAT?</button><button class=g onclick=\"run('ND?')\">ND?</button><button class=g onclick=\"run('NET:STAT?')\">NET:STAT?</button><button class=g onclick=\"run('ROUT:STAT?')\">RF STAT</button><button class=g onclick=\"run('ROUT:CHAN?')\">RF?</button><button class=g onclick=\"run('CAN:STAT?')\">CAN</button><button class=g onclick=\"run('CAN:RX?')\">CAN RX</button><button class=g onclick=\"run('MEAS:POW? 1,2400000')\">&#21151;&#29575;</button><button class=g onclick=\"run('RS485:STAT?')\">485</button><button class=g onclick=\"run('RS485:RX?')\">485 RX</button><button class=g onclick=\"run('SYST:HELP?')\">HELP</button></div><div><button class=g onclick=\"run('ROUT:CHAN 1')\">RF1</button><button class=g onclick=\"run('ROUT:CHAN 2')\">RF2</button><button class=g onclick=\"run('ROUT:CHAN 3')\">RF3</button><button class=g onclick=\"run('ROUT:CHAN 4')\">RF4</button><button class=g onclick=\"run('ROUT:CHAN 5')\">RF5</button><button class=g onclick=\"run('ROUT:CHAN 6')\">RF6</button><button class=g onclick=\"run('ROUT:CHAN 7')\">RF7</button><button class=g onclick=\"run('ROUT:CHAN 8')\">RF8</button></div><pre id=out>Ready.</pre></section>"
     "<section class=panel><h2>&#22266;&#20214;&#21319;&#32423;</h2><p>&#21482;&#25509;&#21463;&#26412;&#39033;&#30446;&#29983;&#25104;&#30340; .bin &#25991;&#20214;&#65292;&#26368;&#22823; %lu bytes&#12290;&#21319;&#32423;&#19981;&#38656;&#35201;&#23494;&#30721;&#65292;&#23436;&#25104;&#21518;&#35774;&#22791;&#33258;&#21160;&#37325;&#21551;&#12290;</p><input id=fw type=file accept=.bin,application/octet-stream><button id=fwbtn class=ok onclick=uploadFw()>&#19978;&#20256;&#24182;&#21319;&#32423;</button><progress id=fwpg value=0 max=100></progress><div id=fwst>Ready.</div></section></main>"
     "<script>const $=id=>document.getElementById(id);const auth=()=>({'X-XC001-Key':$('pwd').value});"
-    "async function sendCmd(){try{let r=await fetch('/api',{method:'POST',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({method:'cmd.execute',params:{cmd:$('cmd').value}}),cache:'no-store'});let j=await r.json();$('out').textContent=(j.status?'OK: ':'ERR: ')+(j.result||'')}catch(e){$('out').textContent='\\u901a\\u4fe1\\u5931\\u8d25: '+e.message}}"
+    "async function sendCmd(){try{let r=await fetch('/api',{method:'POST',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({method:'cmd.execute',params:{cmd:$('cmd').value}}),cache:'no-store'});let t=await r.text(),j;try{j=JSON.parse(t)}catch(_){throw new Error(t||('HTTP '+r.status))}$('out').textContent=(j.status?'OK: ':'ERR: ')+(j.result||j.message||'')}catch(e){$('out').textContent='\\u901a\\u4fe1\\u5931\\u8d25: '+e.message}}"
     "function run(c){$('cmd').value=c;sendCmd()}async function saveCfg(){if(!$('pwd').value){$('out').textContent='\\u8bf7\\u8f93\\u5165\\u5bc6\\u7801';return}let b=new URLSearchParams({ip:$('ip').value,mask:$('mask').value,gw:$('gw').value,port:$('port').value});try{let r=await fetch('/api/config',{method:'POST',headers:{...auth(),'Content-Type':'application/x-www-form-urlencoded'},body:b.toString(),cache:'no-store'});let t=await r.text();$('out').textContent=t+(r.ok?'\\n\\u914d\\u7f6e\\u5df2\\u4fdd\\u5b58\\uff0c\\u91cd\\u542f\\u540e\\u751f\\u6548\\u3002':'')}catch(e){$('out').textContent='\\u4fdd\\u5b58\\u5931\\u8d25: '+e.message}}"
     "let fwPoll=0,fwWaiting=false,fwStarted=false,fwTries=0;const fwName={idle:'\\u5c31\\u7eea',erasing:'\\u6b63\\u5728\\u64e6\\u9664\\u5347\\u7ea7\\u6682\\u5b58\\u533a',receiving:'\\u6b63\\u5728\\u63a5\\u6536\\u5e76\\u5199\\u5165\\u56fa\\u4ef6',verifying:'\\u6b63\\u5728\\u6821\\u9a8c\\u56fa\\u4ef6',ready:'\\u56fa\\u4ef6\\u6821\\u9a8c\\u901a\\u8fc7',rebooting:'\\u8bbe\\u5907\\u6b63\\u5728\\u91cd\\u542f\\u5e76\\u5b89\\u88c5',error:'\\u5347\\u7ea7\\u5931\\u8d25'};"
     "function stopFw(){if(fwPoll){clearInterval(fwPoll);fwPoll=0}}function showFw(s){if(!fwStarted&&(s.state==='idle'||s.state==='error'))return;fwStarted=true;let p=Number(s.progress)||0,d=s.total?' ('+s.received+' / '+s.total+' bytes)':'';$('fwpg').value=p;$('fwst').textContent=(fwName[s.state]||s.message||s.state)+' '+p+'%%'+d+(s.state==='error'&&s.message?' - '+s.message:'');if(s.state==='error'){stopFw();$('fwbtn').disabled=false}if(s.state==='rebooting'&&!fwWaiting){fwWaiting=true;fwTries=0;stopFw();setTimeout(waitFw,3000)}}"
@@ -1216,6 +1217,21 @@ static void send_api_status(int fd, uint8_t status, const char *result)
   send_response(fd, "application/json; charset=utf-8", body);
 }
 
+static void send_api_unauthorized(int fd)
+{
+  static const char body[] = "{\"status\":false,\"result\":\"Authentication required\"}";
+  char hdr[192];
+  int n = snprintf(hdr, sizeof(hdr),
+                   "HTTP/1.1 401 Unauthorized\r\nContent-Type: application/json; charset=utf-8\r\n"
+                   "Cache-Control: no-store\r\nConnection: close\r\nContent-Length: %lu\r\n\r\n",
+                   (unsigned long)(sizeof(body) - 1U));
+  if (n > 0 && (size_t)n < sizeof(hdr))
+  {
+    (void)http_send_all(fd, hdr, (size_t)n);
+    (void)http_send_all(fd, body, sizeof(body) - 1U);
+  }
+}
+
 static uint8_t api_password_ok(const char *body, const char *remote_key)
 {
   char key[32];
@@ -1281,7 +1297,6 @@ static void handle_chaos_api(int fd, const char *body, const char *remote_key)
   else if (strcmp(method, "cmd.execute") == 0 || strcmp(method, "scpi") == 0)
   {
     char raw[XC001_SCPI_LINE_SIZE];
-    char cmd[XC001_SCPI_LINE_SIZE];
     char reply[XC001_SCPI_REPLY_SIZE];
 
     if (!json_get_string(body, "cmd", raw, sizeof(raw)))
@@ -1289,12 +1304,7 @@ static void handle_chaos_api(int fd, const char *body, const char *remote_key)
       send_api_status(fd, 0U, "Missing cmd");
       return;
     }
-    if (!remote_command(raw, remote_key, cmd, sizeof(cmd)))
-    {
-      send_unauthorized(fd);
-      return;
-    }
-    XC001_SCPI_Execute(cmd, reply, sizeof(reply));
+    XC001_SCPI_Execute(raw, reply, sizeof(reply));
     send_api_status(fd, (XC001_StrNCaseCmp(reply, "ERR,", 4U) == 0) ? 0U : 1U, reply);
   }
   else if (strcmp(method, "config.network.get") == 0)
@@ -1309,7 +1319,7 @@ static void handle_chaos_api(int fd, const char *body, const char *remote_key)
 
     if (!api_password_ok(body, remote_key))
     {
-      send_unauthorized(fd);
+      send_api_unauthorized(fd);
       return;
     }
     if (!json_get_string(body, "ip", ip_arg, sizeof(ip_arg)) ||
@@ -1351,7 +1361,7 @@ static void handle_chaos_api(int fd, const char *body, const char *remote_key)
   {
     if (!api_password_ok(body, remote_key))
     {
-      send_unauthorized(fd);
+      send_api_unauthorized(fd);
       return;
     }
     XC001_Config_LoadDefaults();
@@ -1424,7 +1434,7 @@ static void handle_http(int fd, char *req)
   else if (strcmp(path, "/doc.md") == 0)
   {
     send_response(fd, "text/markdown; charset=utf-8",
-                  "# XC001 SCPI\n\n*IDN?\nSTAT?\nNET:STAT?\nCAN:STAT?\nCAN:RX?\nCAN:SEND id,hex\nRS485:STAT?\nRS485:RX?\nRS485:SEND text\n");
+                  "# XC001 SCPI\n\n*IDN?\nSTAT?\nNET:STAT?\nCAN:STAT?\nCAN:RX?\nCAN:SEND id,hex\nMEAS:POW? node,freq_kHz[,sample_ms,mode,threshold,timeout_ms,comp]\nRS485:STAT?\nRS485:RX?\nRS485:SEND text\n");
   }
   else if (strcmp(path, "/link.model") == 0)
   {

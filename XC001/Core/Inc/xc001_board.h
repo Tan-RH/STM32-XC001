@@ -16,6 +16,7 @@ typedef struct
 void XC001_Board_Init(void);
 void XC001_Board_Task(void);
 void XC001_Board_SetStatusOk(uint8_t ok);
+void XC001_Board_IndicateCommandError(void);
 void XC001_Board_WatchdogInit(void);
 void XC001_Board_WatchdogRefresh(void);
 uint32_t XC001_Board_GetAndClearResetFlags(void);
@@ -25,5 +26,8 @@ const XC001_GpioItem *XC001_Board_FindGpio(const char *name);
 uint8_t XC001_Board_WriteGpio(const char *name, uint8_t value, uint8_t toggle);
 uint8_t XC001_Board_ReadGpio(const char *name, uint8_t *value);
 void XC001_Board_GpioList(char *out, size_t out_size);
+uint8_t XC001_Board_SetRfChannel(uint8_t channel);
+uint8_t XC001_Board_GetRfChannel(void);
+void XC001_Board_RfSwitchStatus(char *out, size_t out_size);
 
 #endif

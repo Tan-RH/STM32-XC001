@@ -6,10 +6,10 @@
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:769:19:HAL_ETH_Start_IT	16	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:825:19:HAL_ETH_Stop	16	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:864:19:HAL_ETH_Stop_IT	24	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:925:19:HAL_ETH_Transmit	32	static,ignoring_inline_asm
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1000:19:HAL_ETH_Transmit_IT	16	static,ignoring_inline_asm
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:925:19:HAL_ETH_Transmit	32	static
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1000:19:HAL_ETH_Transmit_IT	16	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1046:19:HAL_ETH_ReadData	48	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1170:13:ETH_UpdateDescriptor	40	static,ignoring_inline_asm
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1170:13:ETH_UpdateDescriptor	40	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1255:19:HAL_ETH_RegisterRxAllocateCallback	16	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1276:19:HAL_ETH_UnRegisterRxAllocateCallback	16	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:1289:13:HAL_ETH_RxAllocateCallback	16	static
@@ -54,4 +54,4 @@
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:2991:13:ETH_MACDMAConfig	152	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:3064:13:ETH_DMATxDescListInit	24	static
 ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:3102:13:ETH_DMARxDescListInit	24	static
-../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:3148:17:ETH_Prepare_Tx_Descriptors	72	static,ignoring_inline_asm
+../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_eth.c:3148:17:ETH_Prepare_Tx_Descriptors	72	static

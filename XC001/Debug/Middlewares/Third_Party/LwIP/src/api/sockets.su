@@ -19,7 +19,7 @@
 ../Middlewares/Third_Party/LwIP/src/api/sockets.c:1063:1:lwip_sock_make_addr	56	static
 ../Middlewares/Third_Party/LwIP/src/api/sockets.c:1096:1:lwip_recv_tcp_from	40	static
 ../Middlewares/Third_Party/LwIP/src/api/sockets.c:1128:1:lwip_recvfrom_udp_raw	64	static
-../Middlewares/Third_Party/LwIP/src/api/sockets.c:1239:1:lwip_recvfrom	88	static
+../Middlewares/Third_Party/LwIP/src/api/sockets.c:1239:1:lwip_recvfrom	80	static
 ../Middlewares/Third_Party/LwIP/src/api/sockets.c:1292:1:lwip_read	32	static
 ../Middlewares/Third_Party/LwIP/src/api/sockets.c:1298:1:lwip_readv	56	static
 ../Middlewares/Third_Party/LwIP/src/api/sockets.c:1315:1:lwip_recv	32	static

@@ -24,232 +24,343 @@ ol { padding-left:24px; }
 </style>
 </head>
 <body>
-<h2>XC001 控制板 SCPI 指令说明</h2>
+<p># XC001 控制板 SCPI 指令说明</p>
 <p class="logo-line"><img class="doc-logo" src="file:///E:/STM32/XC001/Docs/%E5%85%AC%E5%8F%B8logo.png" alt="GeneralTest Logo"></p>
+<p>生成日期：2026-07-29</p>
+<p>固件版本：<code>V1.3.6</code></p>
+<p>适用对象：XC001 STM32H743 控制板</p>
 <hr>
-<h2>设备信息</h2>
-<table><thead><tr><th>项目</th><th>说明</th></tr></thead><tbody>
+<h2>1. 设备与通信</h2>
+<h3>1.1 设备信息</h3>
+<table><thead><tr><th>项目</th><th>当前值</th></tr></thead><tbody>
 <tr><td>制造商</td><td>GeneralTest</td></tr>
 <tr><td>型号</td><td>XC001 CONTROL-BOARD</td></tr>
 <tr><td>MCU</td><td>STM32H743</td></tr>
-<tr><td>软件版本</td><td>V1.1.0</td></tr>
-<tr><td>默认 IP</td><td>192.168.1.10</td></tr>
-<tr><td>默认 UDP 端口</td><td>4000</td></tr>
-<tr><td>HTTP 端口</td><td>80</td></tr>
+<tr><td>软件版本</td><td><code>V1.3.6</code></td></tr>
+<tr><td>默认 IP</td><td><code>192.168.1.10</code></td></tr>
+<tr><td>默认网关</td><td><code>192.168.1.1</code></td></tr>
+<tr><td>默认子网掩码</td><td><code>255.255.255.0</code></td></tr>
+<tr><td>默认 UDP SCPI 端口</td><td><code>4000</code></td></tr>
+<tr><td>HTTP 端口</td><td><code>80</code></td></tr>
 </tbody></table>
-<h2>通信方式</h2>
+<h3>1.2 通信方式</h3>
 <table><thead><tr><th>接口</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td>UART7 控制台</td><td>115200, 8N1</td><td>Type-C 调试串口，发送 SCPI 文本指令并接收文本返回</td></tr>
-<tr><td>UDP SCPI</td><td>默认端口 <code>4000</code></td><td>向板卡 IP 的 UDP 端口发送 SCPI 文本指令</td></tr>
-<tr><td>Web 页面</td><td><code>http://&lt;板卡IP&gt;/</code></td><td>网页内可发送 SCPI 指令，也可配置网络参数</td></tr>
+<tr><td>UART7 控制台</td><td><code>115200, 8N1</code></td><td>Type-C 调试串口，直接发送 SCPI 文本命令</td></tr>
+<tr><td>UDP SCPI</td><td>默认端口 <code>4000</code></td><td>向设备 IP 的 UDP 端口发送 SCPI 文本命令</td></tr>
+<tr><td>Web 页面</td><td><code>http://&lt;设备IP&gt;/</code></td><td>页面内可发送 SCPI、修改网络参数、上传升级固件</td></tr>
+<tr><td>HTTP JSON API</td><td><code>POST /api</code></td><td>支持网页调用 <code>cmd.execute</code> 等接口</td></tr>
 </tbody></table>
-<blockquote>默认网络参数：IP <code>192.168.1.10</code>，子网掩码 <code>255.255.255.0</code>，网关 <code>192.168.1.1</code>。</blockquote>
-<blockquote>网页或 SCPI 修改 IP、子网掩码、网关、UDP 端口后会保存到 Flash，重新上电/重启后生效。</blockquote>
-<h3>远程写入鉴权</h3>
-<p>- 每块控制板使用由 MCU UID 派生的唯一远程写入密钥，密钥会在 UART7 启动日志中显示。</p>
-<p>- UART7 是本地可信控制台，不要求密钥。</p>
-<p>- HTTP 查询类指令可以直接调用；设置或外设操作类指令必须通过 <code>X-XC001-Key</code> 请求头提供密钥。</p>
-<p>- UDP 查询类指令可以直接发送；写入类指令格式为 <code>AUTH &lt;密钥&gt;;&lt;SCPI 指令&gt;</code>。</p>
-<p>- HTTP 端口是明文协议。生产网络仍应使用 VLAN、管理网或上位机网关进行隔离，不应直接暴露到互联网。</p>
-<pre><code>AUTH XC1234567890ABCDEF;DIG:OUTP PE4,1</code></pre>
-<h2>基础指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>*IDN?</code></td><td></td><td>查询设备身份信息</td></tr>
-<tr><td><code>IDN?</code></td><td></td><td>兼容形式，等同于 <code>*IDN?</code></td></tr>
-<tr><td><code>PING?</code></td><td></td><td>通信链路测试</td></tr>
-<tr><td><code>*CLS</code></td><td></td><td>清除当前状态/错误标志</td></tr>
-<tr><td><code>*RST</code></td><td></td><td>重新初始化板级业务 IO</td></tr>
-<tr><td><code>STAT?</code></td><td></td><td>查询网络、CAN、RS485、SPI 综合状态</td></tr>
+<h3>1.3 权限说明</h3>
+<table><thead><tr><th>操作类型</th><th>是否需要密码/密钥</th><th>说明</th></tr></thead><tbody>
+<tr><td>UART7 本地 SCPI</td><td>否</td><td>本地调试口默认可信</td></tr>
+<tr><td>查询类 SCPI</td><td>否</td><td>例如 <code>*IDN?</code>、<code>STAT?</code>、<code>NET:STAT?</code></td></tr>
+<tr><td>设备网页 SCPI 控制</td><td>否</td><td>网页通过 JSON <code>cmd.execute</code> 调用，用于设备操作按钮和调试终端</td></tr>
+<tr><td>UDP 写入类 SCPI</td><td>是</td><td>格式为 <code>AUTH &lt;远程写入密钥&gt;;&lt;SCPI命令&gt;</code></td></tr>
+<tr><td>独立 HTTP <code>/api/cmd</code> 写入类 SCPI</td><td>是</td><td>请求头使用 <code>X-XC001-Key: &lt;远程写入密钥&gt;</code></td></tr>
+<tr><td>修改网络参数</td><td>是</td><td>网页/HTTP 网络配置密码为 <code>GTS</code></td></tr>
+<tr><td>网页上传固件 <code>.bin</code></td><td>否</td><td>固件上传接口不要求密码</td></tr>
+</tbody></table>
+<blockquote>远程写入密钥由 MCU UID 派生，启动日志中会显示。<code>GTS</code> 只用于网络配置，不是所有写入类 SCPI 的通用密钥。</blockquote>
+<hr>
+<h2>2. 系统与基础功能</h2>
+<p>用于确认设备在线、查询身份、读取综合状态、清除状态或重新初始化业务 IO。</p>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>*IDN?</code> / <code>IDN?</code></td><td>查询设备识别信息</td><td><code>XC001,CONTROL-BOARD,H743,V1.3.6</code></td><td>只读</td></tr>
+<tr><td><code>PING?</code></td><td>通信链路测试</td><td><code>PONG</code></td><td>只读</td></tr>
+<tr><td><code>STAT?</code></td><td>查询网络、CAN、RS485、SPI、UART7 综合状态</td><td><code>IP=...;CAN1:...;RS485:...;SPI5:...</code></td><td>只读</td></tr>
+<tr><td><code>*CLS</code></td><td>清除当前状态/错误标志，当前实现返回 OK</td><td><code>OK</code></td><td>写入</td></tr>
+<tr><td><code>*RST</code></td><td>重新初始化板级业务 IO</td><td><code>OK</code></td><td>写入</td></tr>
+<tr><td><code>*STB?</code></td><td>查询状态字节，当前固定返回 0</td><td><code>0</code></td><td>只读</td></tr>
+<tr><td><code>*OPC?</code></td><td>查询操作完成，当前固定返回 1</td><td><code>1</code></td><td>只读</td></tr>
+<tr><td><code>*WAI</code></td><td>等待操作完成，当前返回 OK</td><td><code>OK</code></td><td>只读</td></tr>
+<tr><td><code>SYST:HELP?</code></td><td>查询固件支持的 SCPI 指令列表</td><td>逗号分隔指令列表</td><td>只读</td></tr>
+<tr><td><code>SYST:CLOCK?</code></td><td>查询内核、总线时钟及功耗配置</td><td><code>CPU=240000000,HCLK=120000000,PCLK1=120000000,PCLK2=120000000,PROFILE=LOW_POWER</code></td><td>只读</td></tr>
+<tr><td><code>SYST:ERR?</code> / <code>SYST:ERR:NEXT?</code></td><td>查询系统错误队列下一条错误</td><td><code>0,"No error"</code></td><td>只读</td></tr>
+<tr><td><code>SYSTEM:ERROR?</code> / <code>SYSTEM:ERROR:NEXT?</code></td><td>兼容形式，等同系统错误查询</td><td><code>0,"No error"</code></td><td>只读</td></tr>
+<tr><td><code>SYST:ERR:COUN?</code> / <code>SYST:ERR:COUNT?</code></td><td>查询系统错误数量</td><td><code>0</code></td><td>只读</td></tr>
+<tr><td><code>SYSTEM:ERROR:COUNT?</code></td><td>兼容形式，查询系统错误数量</td><td><code>0</code></td><td>只读</td></tr>
 </tbody></table>
 <h3>示例</h3>
-<pre><code>*IDN?      # 查询设备身份
-PING?      # 通信测试
-STAT?      # 查询综合状态
-*RST       # 重新初始化业务 IO</code></pre>
-<h3>返回示例</h3>
-<pre><code>XC001,CONTROL-BOARD,H743,V1.1.0
+<pre><code>*IDN?
+PING?
+STAT?
+SYST:HELP?
+SYST:CLOCK?
+SYST:ERR?</code></pre>
+<p>典型返回：</p>
+<pre><code>XC001,CONTROL-BOARD,H743,V1.3.6
 PONG
-OK</code></pre>
-<h2>系统指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>SYST:ERR?</code></td><td></td><td>查询系统错误状态</td></tr>
-<tr><td><code>SYST:HELP?</code></td><td></td><td>查询当前固件支持的 SCPI 指令列表</td></tr>
+CPU=240000000,HCLK=120000000,PCLK1=120000000,PCLK2=120000000,PROFILE=LOW_POWER
+0,"No error"</code></pre>
+<h3>2.1 状态指示灯</h3>
+<table><thead><tr><th>状态</th><th>PB1 绿灯</th><th>PB2 红灯</th></tr></thead><tbody>
+<tr><td>正常运行</td><td>按状态周期闪烁</td><td>熄灭，保持高电平</td></tr>
+<tr><td>SCPI 指令返回 <code>ERR,</code></td><td>暂停并熄灭</td><td>立即开始闪烁，持续 2 秒</td></tr>
+<tr><td>指令错误提示结束</td><td>自动恢复闪烁</td><td>自动熄灭并恢复高电平</td></tr>
 </tbody></table>
-<h3>示例</h3>
-<pre><code>SYST:ERR?     # 查询系统错误
-SYST:HELP?    # 查询支持的指令</code></pre>
-<h3>系统错误返回值</h3>
-<table><thead><tr><th>返回值</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>0,"No error"</code></td><td>当前无错误</td></tr>
-<tr><td><code>ERR,-100,"Empty command"</code></td><td>空指令</td></tr>
-<tr><td><code>ERR,-109,"Missing parameter"</code></td><td>缺少参数</td></tr>
-<tr><td><code>ERR,-113,"Undefined header"</code></td><td>未知指令</td></tr>
-<tr><td><code>ERR,-222,"Invalid ..."</code></td><td>参数非法或操作失败</td></tr>
-<tr><td><code>ERR,-224,"Unknown GPIO"</code></td><td>未知 GPIO 名称</td></tr>
+<p>连续收到错误指令时，2 秒提示时间从最后一次错误重新计算。该提示是临时状态，不会改变硬件初始化故障标志。</p>
+<hr>
+<h2>3. 网络配置与诊断</h2>
+<p>用于查看当前 IP、网关、子网掩码、UDP 端口、PHY 链路以及以太网诊断信息。修改网络参数会保存到 Flash，重新上电或复位后生效。</p>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>NET:STAT?</code></td><td>查询当前运行网络配置</td><td><code>IP=192.168.1.10,GW=192.168.1.1,MASK=255.255.255.0,UDP=4000,HTTP=80</code></td><td>只读</td></tr>
+<tr><td><code>NET:DIAG?</code></td><td>查询 LwIP、HTTP、PHY、DMA 诊断状态</td><td><code>NET:IP=...,UP=1,LINK=1,HTTP=1,...</code></td><td>只读</td></tr>
+<tr><td><code>ND?</code></td><td><code>NET:DIAG?</code> 快捷别名</td><td><code>NET:IP=...,UP=1,LINK=1,...</code></td><td>只读</td></tr>
+<tr><td><code>NET:PHY?</code></td><td>查询 LAN8742 PHY 初始化、地址、链路和寄存器信息</td><td><code>PHY:INIT=1,ADDR=0,LINK=...</code></td><td>只读</td></tr>
+<tr><td><code>NET:MAC?</code></td><td>查询由 MCU UID 派生的 MAC 地址</td><td><code>02:xx:xx:xx:xx:xx</code></td><td>只读</td></tr>
+<tr><td><code>NET:IP?</code></td><td>查询当前 IP 地址</td><td><code>192.168.1.10</code></td><td>只读</td></tr>
+<tr><td><code>NET:IP a.b.c.d</code></td><td>保存新的 IP 地址到 Flash，重启后生效</td><td><code>OK,SAVED,REBOOT_REQUIRED</code></td><td>写入</td></tr>
+<tr><td><code>NET:MASK?</code></td><td>查询当前子网掩码</td><td><code>255.255.255.0</code></td><td>只读</td></tr>
+<tr><td><code>NET:MASK a.b.c.d</code></td><td>保存新的子网掩码到 Flash，重启后生效</td><td><code>OK,SAVED,REBOOT_REQUIRED</code></td><td>写入</td></tr>
+<tr><td><code>NET:GATE?</code></td><td>查询当前网关</td><td><code>192.168.1.1</code></td><td>只读</td></tr>
+<tr><td><code>NET:GATE a.b.c.d</code></td><td>保存新的网关到 Flash，重启后生效</td><td><code>OK,SAVED,REBOOT_REQUIRED</code></td><td>写入</td></tr>
+<tr><td><code>NET:PORT?</code></td><td>查询 UDP SCPI 端口</td><td><code>4000</code></td><td>只读</td></tr>
+<tr><td><code>NET:PORT n</code></td><td>保存新的 UDP SCPI 端口，范围 1~65535，重启后生效</td><td><code>OK,SAVED,REBOOT_REQUIRED</code></td><td>写入</td></tr>
+<tr><td><code>NET:SERV ON</code> / <code>NET:SERV:ON</code></td><td>请求启动 HTTP/UDP 网络服务，当前固件已默认上电启动</td><td><code>OK,STARTING</code></td><td>写入</td></tr>
 </tbody></table>
-<h2>网络配置指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>NET:STAT?</code></td><td></td><td>查询当前运行中的网络配置</td></tr>
-<tr><td><code>NET:DIAG?</code></td><td></td><td>查询网络、PHY、HTTP、DMA 诊断状态</td></tr>
-<tr><td><code>ND?</code></td><td></td><td><code>NET:DIAG?</code> 快捷别名</td></tr>
-<tr><td><code>NET:PHY?</code></td><td></td><td>查询以太网 PHY 寄存器和链路状态</td></tr>
-<tr><td><code>NET:MAC?</code></td><td></td><td>查询当前 MAC 地址</td></tr>
-<tr><td><code>NET:SERV ON</code></td><td></td><td>请求启动 HTTP/UDP 网络服务；当前固件默认上电自动启动</td></tr>
-<tr><td><code>NET:IP?</code></td><td></td><td>查询当前运行 IP 地址</td></tr>
-<tr><td><code>NET:IP</code></td><td><code>a.b.c.d</code></td><td>设置 IP 地址并保存到 Flash，重启后生效</td></tr>
-<tr><td><code>NET:MASK?</code></td><td></td><td>查询当前运行子网掩码</td></tr>
-<tr><td><code>NET:MASK</code></td><td><code>a.b.c.d</code></td><td>设置子网掩码并保存到 Flash，重启后生效</td></tr>
-<tr><td><code>NET:GATE?</code></td><td></td><td>查询当前运行网关</td></tr>
-<tr><td><code>NET:GATE</code></td><td><code>a.b.c.d</code></td><td>设置网关并保存到 Flash，重启后生效</td></tr>
-<tr><td><code>NET:PORT?</code></td><td></td><td>查询 UDP SCPI 端口</td></tr>
-<tr><td><code>NET:PORT</code></td><td><code>1~65535</code></td><td>设置 UDP SCPI 端口并保存到 Flash，重启后生效</td></tr>
+<h3>示例：查询网络状态</h3>
+<pre><code>NET:STAT?
+ND?
+NET:PHY?
+NET:MAC?</code></pre>
+<h3>示例：修改网络参数</h3>
+<pre><code>NET:IP 192.168.1.20
+NET:MASK 255.255.255.0
+NET:GATE 192.168.1.1
+NET:PORT 4000</code></pre>
+<p>返回：</p>
+<pre><code>OK,SAVED,REBOOT_REQUIRED</code></pre>
+<blockquote>修改 IP、网关、子网掩码或 UDP 端口后，当前连接不会立即切换。请重启设备后使用新地址访问。</blockquote>
+<h3>示例：UDP 远程写入鉴权</h3>
+<pre><code>AUTH XC1234567890ABCDEF;NET:PORT 4000</code></pre>
+<hr>
+<h2>4. 射频 1 出 8 开关控制</h2>
+<p>用于控制 RFC 到 RF1~RF8 的导通路径。硬件控制线为：</p>
+<table><thead><tr><th>信号</th><th>MCU 引脚</th></tr></thead><tbody>
+<tr><td>V1</td><td>PF7</td></tr>
+<tr><td>V2</td><td>PF8</td></tr>
+<tr><td>V3</td><td>PF9</td></tr>
 </tbody></table>
-<h3>示例</h3>
-<pre><code>NET:STAT?                  # 查询网络配置
-NET:DIAG?                  # 查询网络诊断
-ND?                        # 快捷查询网络诊断
-NET:PHY?                   # 查询 PHY 状态
-NET:IP?                    # 查询 IP
-NET:IP 192.168.1.20        # 设置 IP，重启后生效
-NET:MASK 255.255.255.0     # 设置子网掩码，重启后生效
-NET:GATE 192.168.1.1       # 设置网关，重启后生效
-NET:PORT 4000              # 设置 UDP 端口，重启后生效</code></pre>
-<h3>返回示例</h3>
-<pre><code>IP=192.168.1.10,GW=192.168.1.1,MASK=255.255.255.0,UDP=4000,HTTP=80
-OK,SAVED,REBOOT_REQUIRED
-NET:IP=192.168.1.10,UP=1,LINK=1,HTTP=1,HTTP_ACC=2,HTTP_REQ=2,...
-PHY:INIT=1,ADDR=0,LINK=...</code></pre>
-<h3>网络参数恢复</h3>
-<table><thead><tr><th>信号</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>ETH_NRST</code> / <code>PE15</code></td><td>低电平有效。上电时保持低电平会清除 Flash 中的网络配置并恢复默认 IP、子网掩码、网关和端口。</td></tr>
+<h3>4.1 真值表</h3>
+<table><thead><tr><th>通道</th><th>V1</th><th>V2</th><th>V3</th><th>导通路径</th></tr></thead><tbody>
+<tr><td>1</td><td>0</td><td>0</td><td>0</td><td>RFC TO RF1</td></tr>
+<tr><td>2</td><td>0</td><td>0</td><td>1</td><td>RFC TO RF2</td></tr>
+<tr><td>3</td><td>0</td><td>1</td><td>0</td><td>RFC TO RF3</td></tr>
+<tr><td>4</td><td>0</td><td>1</td><td>1</td><td>RFC TO RF4</td></tr>
+<tr><td>5</td><td>1</td><td>0</td><td>0</td><td>RFC TO RF5</td></tr>
+<tr><td>6</td><td>1</td><td>0</td><td>1</td><td>RFC TO RF6</td></tr>
+<tr><td>7</td><td>1</td><td>1</td><td>0</td><td>RFC TO RF7</td></tr>
+<tr><td>8</td><td>1</td><td>1</td><td>1</td><td>RFC TO RF8</td></tr>
 </tbody></table>
-<h2>数字 IO 指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>DIG:LIST?</code></td><td></td><td>列出固件识别的 GPIO 名称</td></tr>
-<tr><td><code>DIG:OUTP</code></td><td><code>pin,val</code></td><td>设置指定 IO 输出。<code>val=0</code> 输出低电平，<code>val=1</code> 输出高电平，<code>val=T</code> 翻转</td></tr>
-<tr><td><code>DIG:OUTP?</code></td><td><code>pin</code></td><td>读取指定 IO 当前电平</td></tr>
+<h3>4.2 指令表</h3>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>ROUT:CHAN?</code> / <code>ROUTE:CHANNEL?</code></td><td>查询当前导通通道</td><td><code>1</code></td><td>只读</td></tr>
+<tr><td><code>ROUT:STAT?</code> / <code>ROUTE:STATE?</code></td><td>查询当前通道、V1/V2/V3 电平和导通路径</td><td><code>CHAN=1,V1=0,V2=0,V3=0,PATH=RFC-RF1</code></td><td>只读</td></tr>
+<tr><td><code>ROUT:CHAN n</code> / <code>ROUTE:CHANNEL n</code></td><td>设置导通通道，<code>n</code> 范围 1~8</td><td><code>OK,CHAN=3</code></td><td>写入</td></tr>
+<tr><td><code>ROUT:CLOS (@n)</code> / <code>ROUTE:CLOSE (@n)</code></td><td>按 SCPI 开关语义闭合指定通道，等同于导通 RFn</td><td><code>OK,CHAN=3</code></td><td>写入</td></tr>
 </tbody></table>
-<h3>支持的 GPIO 名称</h3>
+<h3>示例：切换到 RF3</h3>
+<pre><code>ROUT:CHAN 3
+ROUT:STAT?</code></pre>
+<p>返回：</p>
+<pre><code>OK,CHAN=3
+CHAN=3,V1=0,V2=1,V3=0,PATH=RFC-RF3</code></pre>
+<h3>示例：使用 SCPI 开关语义</h3>
+<pre><code>ROUT:CLOS (@8)
+ROUT:CHAN?</code></pre>
+<p>返回：</p>
+<pre><code>OK,CHAN=8
+8</code></pre>
+<hr>
+<h2>5. 数字 IO 控制</h2>
+<p>用于控制扩展 GPIO、电平读取和调试输出。部分专用 IO 只读或不建议业务层直接写入。</p>
+<h3>5.1 支持的 GPIO 名称</h3>
+<pre><code>PE4,PE5,PE6,PC8,PC9,PC10,PC11,PC12,PC13,PA8,PA9,PD2,LED1,LED2,ETH_NRST,PF7,PF8,PF9,V1,V2,V3</code></pre>
+<p>说明：</p>
 <table><thead><tr><th>名称</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>PE4</code> / <code>PE5</code> / <code>PE6</code></td><td>扩展 IO，默认低电平</td></tr>
-<tr><td><code>PE3</code></td><td>RS485 方向控制专用，不对 <code>DIG:OUTP</code> 开放</td></tr>
-<tr><td><code>PC8</code> / <code>PC9</code> / <code>PC10</code> / <code>PC11</code> / <code>PC12</code> / <code>PC13</code></td><td>扩展 IO，默认低电平</td></tr>
-<tr><td><code>PA8</code> / <code>PA9</code> / <code>PD2</code></td><td>扩展 IO，默认低电平</td></tr>
+<tr><td><code>PE4</code>、<code>PE5</code>、<code>PE6</code>、<code>PC8</code>~<code>PC13</code>、<code>PA8</code>、<code>PA9</code>、<code>PD2</code></td><td>扩展 IO，默认低电平</td></tr>
 <tr><td><code>LED1</code></td><td>PB1，运行状态指示灯</td></tr>
 <tr><td><code>LED2</code></td><td>PB2，错误状态指示灯，高电平熄灭，低电平点亮</td></tr>
-<tr><td><code>ETH_NRST</code></td><td>PE15，以太网复位/网络恢复输入，不允许通过 <code>DIG:OUTP</code> 写入</td></tr>
+<tr><td><code>ETH_NRST</code></td><td>PE15，以太网复位/网络配置恢复输入，只读，不允许 <code>DIG:OUTP</code> 写入</td></tr>
+<tr><td><code>PF7/PF8/PF9</code>、<code>V1/V2/V3</code></td><td>射频 1 出 8 开关控制线，建议优先使用 <code>ROUT</code> 指令控制</td></tr>
 </tbody></table>
-<h3>示例</h3>
-<pre><code>DIG:LIST?           # 查询 GPIO 名称列表
-DIG:OUTP PE4,1      # PE4 输出高电平
-DIG:OUTP PE4,0      # PE4 输出低电平
-DIG:OUTP PE4,T      # PE4 翻转
-DIG:OUTP? PE4       # 查询 PE4 当前电平</code></pre>
-<h3>返回示例</h3>
-<pre><code>PE4,PE5,PE6,PC8,PC9,PC10,PC11,PC12,PC13,PA8,PA9,PD2,LED1,LED2,ETH_NRST
-OK
-0
-1</code></pre>
-<h2>CAN 指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>CAN:STAT?</code></td><td></td><td>查询 FDCAN1 初始化状态、发送计数和接收计数</td></tr>
-<tr><td><code>CAN:SEND</code></td><td><code>id,hex</code></td><td>发送 CAN 数据帧。<code>id</code> 支持十进制或 <code>0x</code> 前缀，<code>hex</code> 为 0~8 字节十六进制数据</td></tr>
-<tr><td><code>CAN:RX?</code></td><td></td><td>查询最近一次收到的 CAN 帧</td></tr>
+<h3>5.2 指令表</h3>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>DIG:LIST?</code></td><td>列出固件识别的 GPIO 名称</td><td><code>PE4,PE5,...,V3</code></td><td>只读</td></tr>
+<tr><td><code>DIG:OUTP? pin</code></td><td>读取指定 GPIO 当前电平</td><td><code>0</code> 或 <code>1</code></td><td>只读</td></tr>
+<tr><td><code>DIG:OUTP pin,0</code></td><td>设置指定 GPIO 输出低电平</td><td><code>OK</code></td><td>写入</td></tr>
+<tr><td><code>DIG:OUTP pin,1</code></td><td>设置指定 GPIO 输出高电平</td><td><code>OK</code></td><td>写入</td></tr>
+<tr><td><code>DIG:OUTP pin,T</code></td><td>翻转指定 GPIO 输出电平</td><td><code>OK</code></td><td>写入</td></tr>
 </tbody></table>
-<h3>示例</h3>
-<pre><code>CAN:STAT?                  # 查询 CAN 状态
-CAN:SEND 0x123,11223344    # 发送 CAN 帧
-CAN:RX?                    # 查询最近一次接收帧</code></pre>
-<h3>返回示例</h3>
-<pre><code>CAN1:READY=1,TX=1,RX=0
+<h3>示例：控制 PE4</h3>
+<pre><code>DIG:OUTP PE4,1
+DIG:OUTP? PE4
+DIG:OUTP PE4,0
+DIG:OUTP PE4,T</code></pre>
+<p>返回：</p>
+<pre><code>OK
+1
 OK
-ID=0x123,LEN=4,DATA=11223344
+OK</code></pre>
+<hr>
+<h2>6. CAN 功能</h2>
+<p>用于 FDCAN1 状态查询、原始 CAN/CAN FD 帧收发，以及通过 A1 检波板 <code>0x11B</code> 协议查询 H/V 接收功率。</p>
+<h3>6.1 总线配置</h3>
+<table><thead><tr><th>项目</th><th>XC001 当前配置</th><th>说明</th></tr></thead><tbody>
+<tr><td>控制器</td><td>FDCAN1</td><td><code>PD0=RX</code>，<code>PD1=TX</code></td></tr>
+<tr><td>帧格式</td><td>Classic CAN + CAN FD</td><td>CAN FD 不启用 BRS</td></tr>
+<tr><td>标称波特率</td><td><code>2.5 Mbit/s</code></td><td>来源于当前 CubeMX 时钟和位时序；A1 检波板必须配置为相同波特率</td></tr>
+<tr><td>标准 ID</td><td>支持</td><td>A1 协议使用 11 位标准 ID</td></tr>
+<tr><td>扩展 ID</td><td>支持</td><td>仅用于通用 <code>CAN:SEND</code></td></tr>
+<tr><td>数据长度</td><td><code>0~64</code> 字节</td><td><code>0~8</code> 字节发送 Classic CAN，超过 8 字节发送 CAN FD</td></tr>
+</tbody></table>
+<blockquote>《V3.x A1检波板指令》未规定总线波特率，因此 XC001 沿用当前工程的 <code>2.5 Mbit/s</code>。如果 A1 固件采用其他波特率，两端必须统一后才能通信。</blockquote>
+<h3>6.2 SCPI 指令</h3>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>CAN:STAT?</code></td><td>查询 FDCAN1 模式、波特率、收发计数、功率查询成功和超时计数</td><td><code>CAN1:READY=1,MODE=FD_NO_BRS,BAUD=2500000,TX=1,RX=1,PWR_OK=1,PWR_TO=0</code></td><td>只读</td></tr>
+<tr><td><code>CAN:RX?</code></td><td>查询最近一次收到的 CAN/CAN FD 帧</td><td><code>EMPTY</code> 或 <code>ID=0x1,LEN=8,DATA=1B 00 EE 55 ED F2 00 00</code></td><td>只读</td></tr>
+<tr><td><code>CAN:SEND id,hex</code></td><td>发送原始帧；ID 最大 <code>0x1FFFFFFF</code>，数据 <code>0~64</code> 字节</td><td><code>OK</code></td><td>写入</td></tr>
+<tr><td><code>MEASure:POWer? node,freq_kHz[,sample_ms,mode,threshold,timeout_ms,comp]</code></td><td>按 A1 <code>0x11B</code> 协议查询 H/V 接收功率；短形式为 <code>MEAS:POW?</code></td><td><code>NODE=1,FREQ=2400000,H=-45.23dBm,V=-46.22dBm,MODE=0,STATE=0</code></td><td>只读</td></tr>
+<tr><td><code>CAN:POW? node,freq_kHz[,sample_ms,mode,threshold,timeout_ms,comp]</code></td><td><code>MEASure:POWer?</code> 的 CAN 业务别名</td><td>同上</td><td>只读</td></tr>
+</tbody></table>
+<p>功率查询参数：</p>
+<table><thead><tr><th>参数</th><th>范围</th><th>默认值</th><th>含义</th></tr></thead><tbody>
+<tr><td><code>node</code></td><td><code>1~40</code></td><td>无</td><td>A1 检波板 Node ID；功率查询不允许广播</td></tr>
+<tr><td><code>freq_kHz</code></td><td><code>1~16777215</code></td><td>无</td><td>查询频率，单位 kHz，按 24 位大端写入请求帧</td></tr>
+<tr><td><code>sample_ms</code></td><td><code>1~255</code></td><td><code>20</code></td><td>采样时间，单位 ms</td></tr>
+<tr><td><code>mode</code></td><td><code>0~2</code></td><td><code>0</code></td><td><code>0=定时</code>，<code>1=触发</code>，<code>2=缓冲</code></td></tr>
+<tr><td><code>threshold</code></td><td><code>0~65535</code></td><td><code>0</code></td><td>触发阈值，16 位大端；仅触发模式使用</td></tr>
+<tr><td><code>timeout_ms</code></td><td><code>0~65535</code></td><td><code>1000</code></td><td>触发超时，单位 ms，16 位大端</td></tr>
+<tr><td><code>comp</code></td><td><code>0</code> 或 <code>1</code></td><td><code>0</code></td><td><code>0=不使用天线接收补偿</code>，<code>1=使用补偿</code></td></tr>
+</tbody></table>
+<h3>6.3 接收功率查询示例</h3>
+<p>定时采样，使用默认参数：</p>
+<pre><code>MEAS:POW? 1,2400000</code></pre>
+<p>典型返回：</p>
+<pre><code>NODE=1,FREQ=2400000,H=-45.23dBm,V=-46.22dBm,MODE=0,STATE=0</code></pre>
+<p>触发采样，采样 50 ms、阈值 1200、触发超时 3000 ms，并启用天线接收补偿：</p>
+<pre><code>MEASURE:POWER? 2,5800000,50,1,1200,3000,1</code></pre>
+<h3>6.4 A1 <code>0x11B</code> 帧映射</h3>
+<p>XC001 发送标准 ID <code>0x11B</code>、DLC 12 的 CAN FD 帧，关闭 BRS：</p>
+<table><thead><tr><th>字节</th><th>内容</th></tr></thead><tbody>
+<tr><td>Byte0</td><td>目标 Node ID</td></tr>
+<tr><td>Byte1~3</td><td>频率，kHz，24 位大端</td></tr>
+<tr><td>Byte4</td><td>采样时间，ms</td></tr>
+<tr><td>Byte5</td><td>采样模式：<code>0=定时</code>、<code>1=触发</code>、<code>2=缓冲</code></td></tr>
+<tr><td>Byte6~7</td><td>触发阈值，16 位大端</td></tr>
+<tr><td>Byte8~9</td><td>触发超时，ms，16 位大端</td></tr>
+<tr><td>Byte10 Bit0</td><td>天线接收校准补偿使能</td></tr>
+<tr><td>Byte10 Bit1~7、Byte11</td><td>保留，发送 0</td></tr>
+</tbody></table>
+<p>A1 使用标准 ID <code>Node ID</code> 返回 8 字节响应：</p>
+<table><thead><tr><th>字节</th><th>内容</th></tr></thead><tbody>
+<tr><td>Byte0</td><td>命令字 <code>0x1B</code></td></tr>
+<tr><td>Byte1</td><td>结果：<code>0=成功</code>，<code>1=采样失败/设备状态冲突</code>，<code>2=校准数据或参数非法</code></td></tr>
+<tr><td>Byte2~3</td><td>H 功率，<code>dBm × 100</code>，<code>int16</code> 大端</td></tr>
+<tr><td>Byte4~5</td><td>V 功率，<code>dBm × 100</code>，<code>int16</code> 大端</td></tr>
+<tr><td>Byte6</td><td>采样模式回显</td></tr>
+<tr><td>Byte7</td><td>采样状态：<code>0=完成</code>，<code>1=触发</code>，<code>2=超时</code></td></tr>
+</tbody></table>
+<p>例如 <code>MEAS:POW? 1,2400000</code> 默认参数对应请求：</p>
+<pre><code>ID=0x11B, FD=1, BRS=0, DATA=01 24 9F 00 14 00 00 00 03 E8 00 00</code></pre>
+<p>若返回如下帧：</p>
+<pre><code>ID=0x001, DATA=1B 00 EE 55 ED F2 00 00</code></pre>
+<p>则 H 功率为 <code>-45.23 dBm</code>，V 功率为 <code>-46.22 dBm</code>。</p>
+<h3>6.5 原始帧示例</h3>
+<pre><code>CAN:STAT?
+CAN:SEND 0x123,01020304
+CAN:RX?</code></pre>
+<p>返回：</p>
+<pre><code>CAN1:READY=1,MODE=FD_NO_BRS,BAUD=2500000,TX=0,RX=0,PWR_OK=0,PWR_TO=0
+OK
 EMPTY</code></pre>
-<h2>RS485 指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>RS485:STAT?</code></td><td></td><td>查询 RS485 发送/接收计数</td></tr>
-<tr><td><code>RS485:SEND</code></td><td><code>text</code></td><td>通过 RS485 发送文本，固件自动追加 CRLF</td></tr>
-<tr><td><code>RS485:RX?</code></td><td></td><td>查询最近一次 RS485 接收文本</td></tr>
+<hr>
+<h2>7. RS485 功能</h2>
+<p>用于 UART8/RS485 文本发送、接收计数和最近接收文本查询。发送文本时固件会自动追加 CRLF。</p>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>RS485:STAT?</code></td><td>查询 RS485 发送/接收计数</td><td><code>RS485:TX=0,RX=0</code></td><td>只读</td></tr>
+<tr><td><code>RS485:RX?</code></td><td>查询最近一行 RS485 接收文本</td><td><code>EMPTY</code> 或最近文本</td><td>只读</td></tr>
+<tr><td><code>RS485:SEND text</code></td><td>通过 RS485 发送文本，并自动追加 CRLF</td><td><code>OK</code></td><td>写入</td></tr>
 </tbody></table>
-<h3>示例</h3>
-<pre><code>RS485:STAT?             # 查询 RS485 状态
-RS485:SEND hello        # 发送文本
-RS485:RX?               # 查询最近一次接收文本</code></pre>
-<h3>返回示例</h3>
-<pre><code>RS485:TX=1,RX=0
+<h3>示例：发送文本</h3>
+<pre><code>RS485:STAT?
+RS485:SEND hello
+RS485:RX?</code></pre>
+<p>返回：</p>
+<pre><code>RS485:TX=0,RX=0
 OK
 EMPTY</code></pre>
-<h2>SPI 指令</h2>
-<table><thead><tr><th>指令</th><th>参数</th><th>说明</th></tr></thead><tbody>
-<tr><td><code>SPI:STAT?</code></td><td></td><td>查询 SPI5 初始化状态和传输计数</td></tr>
-<tr><td><code>SPI:TRAN?</code></td><td><code>hex</code></td><td>通过 SPI5 发送十六进制数据，并返回同步接收数据</td></tr>
+<hr>
+<h2>8. SPI5 功能</h2>
+<p>当前硬件版本中，PF7/PF8/PF9 已用于射频 1 出 8 开关的 V1/V2/V3 控制线，因此 SPI5 应用层已禁用，避免和开关控制发生引脚复用冲突。</p>
+<table><thead><tr><th>指令</th><th>说明</th><th>返回示例</th><th>权限</th></tr></thead><tbody>
+<tr><td><code>SPI:STAT?</code></td><td>查询 SPI5 状态</td><td><code>SPI5:READY=0,COUNT=0,DISABLED=PF7_PF8_PF9_RF_SWITCH</code></td><td>只读</td></tr>
+<tr><td><code>SPI:TRAN? hex</code></td><td>SPI5 传输接口保留；当前硬件版本返回失败</td><td><code>ERR,-222,"SPI transfer failed"</code></td><td>写入</td></tr>
 </tbody></table>
 <h3>示例</h3>
-<pre><code>SPI:STAT?            # 查询 SPI 状态
-SPI:TRAN? 9F0000     # 发送 3 字节并读取返回</code></pre>
-<h3>返回示例</h3>
-<pre><code>SPI5:READY=1,COUNT=0
-FFFFFF</code></pre>
-<h2>Web HTTP 接口</h2>
+<pre><code>SPI:STAT?
+SPI:TRAN? 9F000000</code></pre>
+<hr>
+<h2>9. Web 与固件升级</h2>
+<p>网页用于本地浏览器控制设备、发送 SCPI、修改网络参数和上传应用固件 <code>.bin</code>。</p>
+<h3>9.1 HTTP 接口</h3>
 <table><thead><tr><th>接口</th><th>方法</th><th>说明</th></tr></thead><tbody>
 <tr><td><code>/</code></td><td>GET</td><td>打开 XC001 网页控制台</td></tr>
-<tr><td><code>/api/cmd</code></td><td>POST</td><td>请求体为 SCPI 指令文本；写入类指令需要 <code>X-XC001-Key</code> 请求头</td></tr>
-<tr><td><code>/api/config</code></td><td>GET</td><td>无参数时读取当前运行网络配置</td></tr>
-<tr><td><code>/api/config</code></td><td>POST</td><td>表单正文包含 <code>ip</code>、<code>mask</code>、<code>gw</code>、<code>port</code>，并通过 <code>X-XC001-Key</code> 请求头鉴权；保存后重启生效</td></tr>
-<tr><td><code>/api/firmware</code></td><td>POST</td><td>请求体为主程序 <code>.bin</code> 原始内容，使用 <code>X-XC001-Key</code> 鉴权；校验成功后自动重启升级</td></tr>
-<tr><td><code>/api/firmware/status</code></td><td>GET</td><td>读取设备端升级阶段、百分比、已接收字节数、文件总字节数和当前软件版本</td></tr>
+<tr><td><code>/api</code></td><td>POST</td><td>网页 JSON API；<code>cmd.execute</code> 可直接执行 SCPI，网络设置仍需密码</td></tr>
+<tr><td><code>/api/cmd</code></td><td>POST</td><td>请求体为 SCPI 文本，返回 SCPI 文本响应</td></tr>
+<tr><td><code>/api/config</code></td><td>POST</td><td>保存 IP、网关、子网掩码、UDP 端口，需 <code>X-XC001-Key: GTS</code></td></tr>
+<tr><td><code>/api/firmware/status</code></td><td>GET</td><td>查询固件上传/校验/重启安装状态</td></tr>
+<tr><td><code>/firmware_upload</code></td><td>POST</td><td>上传主程序 <code>.bin</code> 文件</td></tr>
 </tbody></table>
-<h3>示例</h3>
-<pre><code>POST /api/cmd
+<h3>9.2 HTTP SCPI 示例</h3>
+<pre><code>POST /api/cmd HTTP/1.1
 X-XC001-Key: XC1234567890ABCDEF
+Content-Type: text/plain
 
-DIG:OUTP PE4,1</code></pre>
-<pre><code>POST /api/config
-X-XC001-Key: XC1234567890ABCDEF
+ROUT:CHAN 3</code></pre>
+<h3>9.3 修改网络参数示例</h3>
+<pre><code>POST /api/config HTTP/1.1
+X-XC001-Key: GTS
 Content-Type: application/x-www-form-urlencoded
 
 ip=192.168.1.20&amp;mask=255.255.255.0&amp;gw=192.168.1.1&amp;port=4000</code></pre>
-<h2>网页固件升级</h2>
-<p>网页首页显示当前软件版本，并提供 <code>.bin</code> 文件选择、设备端实时进度和升级状态。进度依次显示暂存区擦除、接收并写入、固件校验以及重启安装阶段。</p>
-<h3>首次安装</h3>
-<p>网页升级依赖两个常驻组件。首次启用时，推荐通过 ST-Link 等外部下载器直接烧录：</p>
-<p>- <code>Bootloader/build/XC001_Factory.hex</code></p>
-<p>该 Factory HEX 已合并 Stage0、主程序和 Recovery Bootloader，因此不需要再单独烧录 <code>bootloader.hex</code>。只有需要分区调试或手动烧录时，才分别烧录：</p>
-<p>新板首次烧录步骤：</p>
-<p>1. 通过 SWD 连接 ST-Link，并给目标板正常供电。</p>
-<p>2. 打开 STM32CubeProgrammer，选择 ST-Link 并连接目标 MCU。</p>
-<p>3. 对全新板执行一次 Full chip erase（整片擦除）。</p>
-<p>4. 打开 <code>Bootloader/build/XC001_Factory.hex</code>，勾选下载后校验并执行 Download。</p>
-<p>5. 校验成功后复位或重新上电，通过 UART7 启动日志确认版本、设备写入密钥和网络初始化状态。</p>
-<p>6. 使用默认地址 <code>192.168.1.10</code> 访问网页；若电脑不在同一网段，先临时配置同网段静态 IP。</p>
-<p>如果不使用 Factory HEX，分区调试时才按以下三个文件分别烧录：</p>
-<p>1. <code>Bootloader/build/XC001_Stage0.hex</code>，地址 <code>0x08000000</code>。</p>
-<p>2. <code>Bootloader/build/XC001_Recovery.hex</code>，地址 <code>0x081E0000</code>。</p>
-<p>3. <code>Bootloader/build/XC001_Application_V1.1.0.hex</code>（或当前版本的应用 HEX），链接地址为 <code>0x08020000</code>。</p>
-<p>常驻组件可通过以下命令构建：</p>
-<pre><code>make -C Bootloader all</code></pre>
-<p>完成首次安装后，不要再使用“整片擦除”，否则会删除 Stage0 和 Recovery Bootloader。</p>
-<h3>网页升级步骤</h3>
-<p>1. 使用当前工程生成主程序 <code>.bin</code>，文件大小不得超过 655360 bytes。</p>
-<p>2. 打开设备网页，确认页面上的当前软件版本。</p>
-<p>3. 在“固件升级”区域输入 UART7 启动日志中的设备写入密钥。</p>
-<p>4. 选择主程序 <code>.bin</code>，点击“上传并升级”。</p>
-<p>5. 网页实时显示设备擦除、接收/写入、校验和重启状态；设备重新联网后页面显示当前版本号。</p>
-<p>升级文件会先写入 Bank2 暂存区，并检查长度、向量表和 CRC32。断电发生在上传或主程序复制期间时，Stage0 会保留恢复入口，下一次上电由 Recovery Bootloader 重新执行复制。</p>
-<p>设备重启后，Recovery Bootloader 将暂存固件复制到主程序区。此时网络服务尚未启动，网页会显示“设备正在重启并安装”，无法提供复制过程中的逐字节进度；主程序启动并恢复网络后，网页会自动确认设备上线和版本号。</p>
-<blockquote>旧版链接地址为 <code>0x08000000</code> 的 <code>.bin</code> 会被拒绝。只能上传启用本升级布局后重新构建的主程序 <code>.bin</code>。</blockquote>
-<h2>指示灯状态</h2>
-<table><thead><tr><th>引脚</th><th>状态</th><th>说明</th></tr></thead><tbody>
-<tr><td>PB1 / LED1</td><td>周期闪烁</td><td>运行状态指示灯。闪烁周期由 <code>XC001_STATUS_BLINK_MS</code> 配置。</td></tr>
-<tr><td>PB2 / LED2</td><td>高电平熄灭，低电平点亮</td><td>错误状态指示灯。正常状态保持高电平熄灭。</td></tr>
+<h3>9.4 固件升级说明</h3>
+<p>网页升级使用应用固件 <code>.bin</code> 文件：</p>
+<pre><code>Debug/XC001_&lt;版本号&gt;.bin</code></pre>
+<p>不要上传：</p>
+<p>- <code>.hex</code></p>
+<p>- <code>Bootloader.hex</code></p>
+<p>- <code>Factory.hex</code></p>
+<p>升级状态查询：</p>
+<pre><code>GET /api/firmware/status</code></pre>
+<hr>
+<h2>10. 参数格式</h2>
+<table><thead><tr><th>参数</th><th>格式</th><th>示例</th></tr></thead><tbody>
+<tr><td><code>a.b.c.d</code></td><td>IPv4 地址，四段十进制</td><td><code>192.168.1.20</code></td></tr>
+<tr><td><code>n</code></td><td>通道号或端口号；通道范围 1~8，端口范围 1~65535</td><td><code>3</code>、<code>4000</code></td></tr>
+<tr><td><code>pin</code></td><td>GPIO 名称，不区分大小写</td><td><code>PE4</code>、<code>LED1</code>、<code>V1</code></td></tr>
+<tr><td><code>val</code></td><td><code>0</code>、<code>1</code> 或 <code>T</code></td><td><code>DIG:OUTP PE4,T</code></td></tr>
+<tr><td><code>id</code></td><td>CAN 标准/扩展 ID，十进制或 <code>0x</code> 十六进制</td><td><code>0x123</code></td></tr>
+<tr><td><code>hex</code></td><td>连续十六进制字节，允许空格或逗号分隔；CAN 最大 64 字节</td><td><code>01020304</code>、<code>01 02 03 04</code></td></tr>
+<tr><td><code>node</code></td><td>A1 检波板 Node ID，功率查询范围 1~40</td><td><code>1</code></td></tr>
+<tr><td><code>freq_kHz</code></td><td>A1 接收功率查询频率，单位 kHz，最大 24 位无符号数</td><td><code>2400000</code></td></tr>
+<tr><td><code>text</code></td><td>普通文本</td><td><code>RS485:SEND hello</code></td></tr>
 </tbody></table>
-<h2>注意事项</h2>
-<p>1. SCPI 指令大小写不敏感。</p>
-<p>2. 串口指令建议以回车或换行结束。</p>
-<p>3. 网页和 UDP 通道均调用同一套 SCPI 解析逻辑。</p>
-<p>4. 修改网络参数后，当前运行网络不会立即切换；请重新上电或复位后使用新地址访问。</p>
-<p>5. 设置类指令若参数非法，通常返回 <code>ERR,-222,"Invalid ..."</code>。</p>
-<p>6. 文档中的 <code>XC1234567890ABCDEF</code> 仅为格式示例，实际密钥以设备 UART7 启动日志为准。</p>
-<p>7. 在线升级目前提供完整性校验和断电恢复，但不包含数字签名；生产环境仍应限制升级密钥和管理网络访问权限。</p>
+<hr>
+<h2>11. 常见错误返回</h2>
+<table><thead><tr><th>返回</th><th>含义</th></tr></thead><tbody>
+<tr><td><code>ERR,-100,"Empty command"</code></td><td>空命令</td></tr>
+<tr><td><code>ERR,-109,"Missing parameter"</code></td><td>缺少参数</td></tr>
+<tr><td><code>ERR,-113,"Undefined header"</code></td><td>未识别的 SCPI 指令</td></tr>
+<tr><td><code>ERR,-222,"Invalid ..."</code></td><td>参数非法或外设发送失败</td></tr>
+<tr><td><code>ERR,-222,"Channel must be 1 to 8"</code></td><td>射频开关通道必须为 1~8</td></tr>
+<tr><td><code>ERR,-224,"Unknown GPIO"</code></td><td>GPIO 名称不存在或不可写</td></tr>
+<tr><td><code>ERR,-300,"Command executor unavailable"</code></td><td>SCPI 执行器不可用</td></tr>
+<tr><td><code>ERR,-300,"CAN not ready"</code></td><td>FDCAN1 尚未成功初始化</td></tr>
+<tr><td><code>ERR,-410,"CAN power response timeout"</code></td><td>已发送 <code>0x11B</code>，但等待时间内未收到匹配的 A1 响应</td></tr>
+<tr><td><code>ERR,-221,"CAN power query busy"</code></td><td>已有一个接收功率查询正在执行</td></tr>
+<tr><td><code>ERR,-222,"A1 status 1"</code></td><td>A1 采样失败，或处于 OTA、校准保存、SN 写入状态</td></tr>
+<tr><td><code>ERR,-222,"A1 status 2"</code></td><td>A1 校准数据无效/未写入，或请求参数非法</td></tr>
+</tbody></table>
 </body>
 </html>

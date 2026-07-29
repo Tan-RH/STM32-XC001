@@ -7,16 +7,25 @@
 
 #define LED_RUN_PORT       GPIOB
 #define LED_RUN_PIN        GPIO_PIN_1
+#define LED_RUN_ON         GPIO_PIN_RESET
+#define LED_RUN_OFF        GPIO_PIN_SET
 #define LED_ERR_PORT       GPIOB
 #define LED_ERR_PIN        GPIO_PIN_2
 #define LED_ERR_ON         GPIO_PIN_RESET
 #define LED_ERR_OFF        GPIO_PIN_SET
 #define ETH_NRST_PORT      GPIOE
 #define ETH_NRST_PIN       GPIO_PIN_15
+#define RF_SW_PORT         GPIOF
+#define RF_SW_V1_PIN       GPIO_PIN_7
+#define RF_SW_V2_PIN       GPIO_PIN_8
+#define RF_SW_V3_PIN       GPIO_PIN_9
+#define RF_SW_ALL_PINS     (RF_SW_V1_PIN | RF_SW_V2_PIN | RF_SW_V3_PIN)
 
 static uint8_t s_status_ok = 1U;
 static uint32_t s_last_blink;
 static uint8_t s_led_on;
+static volatile uint8_t s_command_error_active;
+static volatile uint32_t s_command_error_until;
 static uint8_t s_watchdog_started;
 
 static const XC001_GpioItem s_gpio_table[] = {
@@ -28,6 +37,9 @@ static const XC001_GpioItem s_gpio_table[] = {
   {"PA8", GPIOA, GPIO_PIN_8, 1}, {"PA9", GPIOA, GPIO_PIN_9, 1},
   {"PD2", GPIOD, GPIO_PIN_2, 1}, {"LED1", GPIOB, GPIO_PIN_1, 1},
   {"LED2", GPIOB, GPIO_PIN_2, 1}, {"ETH_NRST", GPIOE, GPIO_PIN_15, 0},
+  {"PF7", GPIOF, GPIO_PIN_7, 1}, {"PF8", GPIOF, GPIO_PIN_8, 1},
+  {"PF9", GPIOF, GPIO_PIN_9, 1}, {"V1", GPIOF, GPIO_PIN_7, 1},
+  {"V2", GPIOF, GPIO_PIN_8, 1}, {"V3", GPIOF, GPIO_PIN_9, 1},
 };
 
 static void eth_nrst_as_output(GPIO_PinState level)
@@ -42,34 +54,87 @@ static void eth_nrst_as_output(GPIO_PinState level)
   HAL_GPIO_Init(ETH_NRST_PORT, &init);
 }
 
+static void rf_switch_init(void)
+{
+  GPIO_InitTypeDef init = {0};
+
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+  HAL_GPIO_WritePin(RF_SW_PORT, RF_SW_ALL_PINS, GPIO_PIN_RESET);
+  init.Pin = RF_SW_ALL_PINS;
+  init.Mode = GPIO_MODE_OUTPUT_PP;
+  init.Pull = GPIO_NOPULL;
+  init.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(RF_SW_PORT, &init);
+}
+
 void XC001_Board_Init(void)
 {
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN, GPIO_PIN_RESET);
+  rf_switch_init();
+  HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN, LED_RUN_OFF);
   HAL_GPIO_WritePin(LED_ERR_PORT, LED_ERR_PIN, LED_ERR_OFF);
   eth_nrst_as_output(GPIO_PIN_SET);
+  s_led_on = 0U;
+  s_command_error_active = 0U;
+  s_command_error_until = 0U;
   s_last_blink = osKernelGetTickCount();
 }
 
 void XC001_Board_Task(void)
 {
   uint32_t now = osKernelGetTickCount();
+  uint8_t command_error =
+      (s_command_error_active != 0U &&
+       (int32_t)(s_command_error_until - now) > 0) ? 1U : 0U;
+
+  if (s_command_error_active != 0U && command_error == 0U)
+  {
+    s_command_error_active = 0U;
+    s_command_error_until = 0U;
+    s_led_on = 0U;
+    s_last_blink = now;
+    HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN, LED_RUN_OFF);
+    HAL_GPIO_WritePin(LED_ERR_PORT, LED_ERR_PIN, LED_ERR_OFF);
+  }
 
   if ((now - s_last_blink) >= XC001_STATUS_BLINK_MS)
   {
     s_last_blink = now;
     s_led_on ^= 1U;
-    HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN, s_led_on ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_ERR_PORT, LED_ERR_PIN, s_status_ok ? LED_ERR_OFF : LED_ERR_ON);
+    if (command_error != 0U)
+    {
+      HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN, LED_RUN_OFF);
+      HAL_GPIO_WritePin(LED_ERR_PORT, LED_ERR_PIN,
+                        s_led_on ? LED_ERR_ON : LED_ERR_OFF);
+    }
+    else
+    {
+      HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN,
+                        s_led_on ? LED_RUN_ON : LED_RUN_OFF);
+      HAL_GPIO_WritePin(LED_ERR_PORT, LED_ERR_PIN,
+                        s_status_ok ? LED_ERR_OFF : LED_ERR_ON);
+    }
   }
 }
 
 void XC001_Board_SetStatusOk(uint8_t ok)
 {
   s_status_ok = ok ? 1U : 0U;
+}
+
+void XC001_Board_IndicateCommandError(void)
+{
+  uint32_t now = osKernelGetTickCount();
+
+  s_command_error_until = now + XC001_COMMAND_ERROR_MS;
+  s_command_error_active = 1U;
+  s_led_on = 1U;
+  s_last_blink = now;
+  HAL_GPIO_WritePin(LED_RUN_PORT, LED_RUN_PIN, LED_RUN_OFF);
+  HAL_GPIO_WritePin(LED_ERR_PORT, LED_ERR_PIN, LED_ERR_ON);
 }
 
 void XC001_Board_WatchdogInit(void)
@@ -216,4 +281,70 @@ void XC001_Board_GpioList(char *out, size_t out_size)
     }
     used += (size_t)n;
   }
+}
+
+uint8_t XC001_Board_SetRfChannel(uint8_t channel)
+{
+  uint8_t code;
+  uint32_t set_pins = 0UL;
+
+  if (channel < 1U || channel > 8U)
+  {
+    return 0U;
+  }
+
+  code = (uint8_t)(channel - 1U);
+  if ((code & 0x04U) != 0U)
+  {
+    set_pins |= RF_SW_V1_PIN;
+  }
+  if ((code & 0x02U) != 0U)
+  {
+    set_pins |= RF_SW_V2_PIN;
+  }
+  if ((code & 0x01U) != 0U)
+  {
+    set_pins |= RF_SW_V3_PIN;
+  }
+
+  RF_SW_PORT->BSRR = ((uint32_t)RF_SW_ALL_PINS << 16U) | set_pins;
+  return 1U;
+}
+
+uint8_t XC001_Board_GetRfChannel(void)
+{
+  uint8_t code = 0U;
+
+  if (HAL_GPIO_ReadPin(RF_SW_PORT, RF_SW_V1_PIN) == GPIO_PIN_SET)
+  {
+    code |= 0x04U;
+  }
+  if (HAL_GPIO_ReadPin(RF_SW_PORT, RF_SW_V2_PIN) == GPIO_PIN_SET)
+  {
+    code |= 0x02U;
+  }
+  if (HAL_GPIO_ReadPin(RF_SW_PORT, RF_SW_V3_PIN) == GPIO_PIN_SET)
+  {
+    code |= 0x01U;
+  }
+  return (uint8_t)(code + 1U);
+}
+
+void XC001_Board_RfSwitchStatus(char *out, size_t out_size)
+{
+  uint8_t channel;
+  uint8_t code;
+
+  if (out == 0 || out_size == 0U)
+  {
+    return;
+  }
+  channel = XC001_Board_GetRfChannel();
+  code = (uint8_t)(channel - 1U);
+  snprintf(out, out_size, "CHAN=%u,V1=%u,V2=%u,V3=%u,PATH=RFC-RF%u",
+           channel,
+           ((code & 0x04U) != 0U) ? 1U : 0U,
+           ((code & 0x02U) != 0U) ? 1U : 0U,
+           ((code & 0x01U) != 0U) ? 1U : 0U,
+           channel);
 }

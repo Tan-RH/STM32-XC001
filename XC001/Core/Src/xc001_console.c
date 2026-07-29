@@ -2,6 +2,7 @@
 #include "xc001_config.h"
 #include "xc001_scpi.h"
 #include "xc001_board.h"
+#include "xc001_utils.h"
 #include "usart.h"
 #include "cmsis_os2.h"
 #include <stdio.h>
@@ -189,6 +190,16 @@ static void console_execute_line(void)
   s_drop_line_end = 1U;
 }
 
+static uint8_t console_query_needs_parameters(void)
+{
+  s_line[s_len] = '\0';
+  return (XC001_StrCaseCmp(s_line, "DIG:OUTP?") == 0 ||
+          XC001_StrCaseCmp(s_line, "SPI:TRAN?") == 0 ||
+          XC001_StrCaseCmp(s_line, "CAN:POW?") == 0 ||
+          XC001_StrCaseCmp(s_line, "MEAS:POW?") == 0 ||
+          XC001_StrCaseCmp(s_line, "MEASURE:POWER?") == 0) ? 1U : 0U;
+}
+
 void XC001_Console_Task(void)
 {
   uint8_t ch;
@@ -222,7 +233,7 @@ void XC001_Console_Task(void)
       {
         s_drop_line_end = 0U;
         s_line[s_len++] = (char)ch;
-        if (ch == '?')
+        if (ch == '?' && console_query_needs_parameters() == 0U)
         {
           console_execute_line();
         }

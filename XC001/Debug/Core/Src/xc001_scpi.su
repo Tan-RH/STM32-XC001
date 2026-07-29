@@ -1,5 +1,9 @@
 ../Core/Src/xc001_scpi.c:20:6:XC001_SCPI_Init	24	static
 ../Core/Src/xc001_scpi.c:33:16:save_network_candidate	48	static
-../Core/Src/xc001_scpi.c:50:9:XC001_SCPI_IsReadOnly	216	static
-../Core/Src/xc001_scpi.c:77:13:reply_net_config	96	static
-../Core/Src/xc001_scpi.c:88:6:XC001_SCPI_Execute	696	static
+../Core/Src/xc001_scpi.c:50:16:parse_rf_channel	32	static
+../Core/Src/xc001_scpi.c:99:16:parse_power_query	72	static
+../Core/Src/xc001_scpi.c:141:13:format_cdbm	40	static
+../Core/Src/xc001_scpi.c:155:13:indicate_scpi_error	16	static
+../Core/Src/xc001_scpi.c:163:9:XC001_SCPI_IsReadOnly	216	static
+../Core/Src/xc001_scpi.c:195:13:reply_net_config	96	static
+../Core/Src/xc001_scpi.c:206:6:XC001_SCPI_Execute	832	static

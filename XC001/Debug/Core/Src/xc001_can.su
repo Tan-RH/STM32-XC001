@@ -1,7 +1,8 @@
-../Core/Src/xc001_can.c:17:17:dlc_from_len	16	static
-../Core/Src/xc001_can.c:27:16:len_from_dlc	16	static
-../Core/Src/xc001_can.c:36:6:XC001_CAN_Init	48	static
-../Core/Src/xc001_can.c:78:6:XC001_CAN_Task	64	static
-../Core/Src/xc001_can.c:99:9:XC001_CAN_Send	72	static
-../Core/Src/xc001_can.c:126:6:XC001_CAN_Status	40	static
-../Core/Src/xc001_can.c:141:6:XC001_CAN_LastRx	80	static
+../Core/Src/xc001_can.c:29:17:dlc_from_len	24	static
+../Core/Src/xc001_can.c:51:16:len_from_dlc	16	static
+../Core/Src/xc001_can.c:64:6:XC001_CAN_Init	48	static
+../Core/Src/xc001_can.c:108:6:XC001_CAN_Task	120	static
+../Core/Src/xc001_can.c:145:9:XC001_CAN_Send	128	static
+../Core/Src/xc001_can.c:174:23:XC001_CAN_QueryRxPower	48	static
+../Core/Src/xc001_can.c:264:6:XC001_CAN_Status	56	static
+../Core/Src/xc001_can.c:285:6:XC001_CAN_LastRx	304	static
