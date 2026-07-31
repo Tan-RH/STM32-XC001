@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>General Test · LMX2592 串口指令手册</title>
+  <style>
+    @page { size: A4; margin: 16mm 17mm 17mm; }
+    * { box-sizing: border-box; }
+    :root { --navy: #07192e; --red: #e4003b; --ink: #182534; --muted: #647180; --line: #cbd3da; --pale: #f2f5f7; }
+    html, body { margin: 0; padding: 0; color: var(--ink); font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; font-size: 10.5pt; line-height: 1.55; }
+    body { background: #fff; }
+    .cover { position: relative; height: 263mm; break-after: page; page-break-after: always; overflow: hidden; }
+    .cover::before { content: ""; position: absolute; top: 0; left: 0; width: 14mm; height: 100%; background: var(--red); }
+    .cover-inner { height: 100%; margin-left: 14mm; padding: 15mm 13mm 12mm 20mm; display: flex; flex-direction: column; }
+    .brand { width: 82mm; height: auto; object-fit: contain; object-position: left center; }
+    .cover-rule { width: 22mm; height: 2px; margin-top: 31mm; background: var(--red); }
+    .cover h1 { max-width: 130mm; margin: 8mm 0 2mm; color: var(--navy); font-size: 29pt; line-height: 1.22; font-weight: 700; letter-spacing: 0; }
+    .cover-subtitle { color: #435264; font-size: 15pt; }
+    .cover-product { margin-top: 8mm; color: var(--red); font-size: 11pt; font-weight: 700; }
+    .cover-info { width: 100%; margin-top: auto; border-top: 1px solid var(--line); }
+    .cover-row { display: grid; grid-template-columns: 32mm 1fr; padding: 3.2mm 0; border-bottom: 1px solid var(--line); }
+    .cover-label { color: var(--muted); font-size: 9pt; }
+    .cover-value { color: var(--navy); font-weight: 600; }
+    .cover-note { margin-top: 6mm; color: var(--muted); font-size: 8.5pt; }
+
+    .page { height: 263mm; position: relative; overflow: hidden; break-after: page; page-break-after: always; }
+    .page:last-child { break-after: auto; page-break-after: auto; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; height: 12mm; margin-bottom: 7mm; padding-bottom: 3mm; border-bottom: 1px solid var(--navy); }
+    .page-header img { width: 39mm; height: auto; }
+    .doc-id { color: var(--muted); font-size: 8.5pt; }
+    h2 { margin: 0 0 5mm; color: var(--navy); font-size: 19pt; line-height: 1.25; }
+    h3 { margin: 5mm 0 2mm; color: var(--navy); font-size: 12pt; }
+    .section-number { color: var(--red); margin-right: 2mm; }
+    p { margin: 1.5mm 0; }
+    .lead { margin-bottom: 4mm; color: #435264; font-size: 11pt; }
+    .serial-grid { display: grid; grid-template-columns: repeat(4, 1fr); margin: 3mm 0 5mm; border: 1px solid var(--line); }
+    .serial-item { padding: 3mm; border-right: 1px solid var(--line); }
+    .serial-item:last-child { border-right: 0; }
+    .serial-label { display: block; color: var(--muted); font-size: 8.5pt; }
+    .serial-value { display: block; margin-top: 1mm; color: var(--navy); font-weight: 700; }
+    .quick-box { margin: 3mm 0 5mm; padding: 5mm 6mm; border-left: 4px solid var(--red); background: var(--pale); break-inside: avoid; page-break-inside: avoid; }
+    .quick-title { margin-bottom: 2mm; color: var(--navy); font-size: 11pt; font-weight: 700; }
+    code { padding: 0.4mm 1.2mm; border-radius: 2px; background: #e9edf0; color: var(--navy); font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; }
+    pre { margin: 2mm 0 0; color: var(--navy); font-family: Consolas, "Courier New", monospace; font-size: 10pt; line-height: 1.65; white-space: pre-wrap; }
+    table { width: 100%; margin: 2mm 0 4mm; border-collapse: collapse; break-inside: avoid; page-break-inside: avoid; }
+    th, td { padding: 2.5mm 3mm; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: #fff; background: var(--navy); font-size: 9pt; font-weight: 600; }
+    td:first-child { width: 39%; }
+    tr:nth-child(even) td { background: #f7f9fa; }
+    .note { margin: 3mm 0; padding: 3mm 4mm; border: 1px solid #e1c36c; background: #fff9e8; break-inside: avoid; page-break-inside: avoid; }
+    .note strong { color: #6c5000; }
+    .status-box { padding: 3mm 4mm; background: var(--navy); color: #fff; break-inside: avoid; page-break-inside: avoid; }
+    .status-box pre { margin: 0; color: #fff; }
+    ul { margin: 2mm 0 4mm; padding-left: 6mm; }
+    li { margin: 1mm 0; }
+    .page-footer { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding-top: 2.5mm; border-top: 1px solid var(--line); color: var(--muted); font-size: 8pt; }
+    .page-no::after { content: attr(data-page); }
+    .compact h3 { margin: 3.3mm 0 1.5mm; }
+    .compact table { margin: 1.5mm 0 2.5mm; }
+    .compact th, .compact td { padding: 1.8mm 2.5mm; font-size: 9.5pt; line-height: 1.45; }
+    .compact p { margin: 1mm 0; }
+    .compact ul { margin: 1.5mm 0 2.5mm; }
+    .compact .status-box { padding: 2.5mm 3.5mm; }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div class="cover-inner">
+      <img class="brand" src="公司logo.png" alt="General Test">
+      <div class="cover-rule"></div>
+      <h1>LMX2592 串口指令手册</h1>
+      <div class="cover-subtitle">频率源与输出通道控制</div>
+      <div class="cover-product">客户使用文档</div>
+      <div class="cover-info">
+        <div class="cover-row"><span class="cover-label">适用固件</span><span class="cover-value">V1.4.0</span></div>
+        <div class="cover-row"><span class="cover-label">文档版本</span><span class="cover-value">V1.4</span></div>
+        <div class="cover-row"><span class="cover-label">发布日期</span><span class="cover-value">2026-07-31</span></div>
+      </div>
+      <div class="cover-note">本手册用于说明设备串口连接、频率设置及输出控制方法。</div>
+    </div>
+  </section>
+
+  <section class="page">
+    <header class="page-header">
+      <img src="公司logo.png" alt="General Test">
+      <span class="doc-id">LMX2592 串口指令手册 · V1.4</span>
+    </header>
+
+    <h2><span class="section-number">01</span>连接与快速使用</h2>
+    <p class="lead">使用串口工具连接设备后，输入指令并发送回车或换行。所有指令均不区分大小写。</p>
+
+    <h3>串口参数</h3>
+    <div class="serial-grid">
+      <div class="serial-item"><span class="serial-label">波特率</span><span class="serial-value">115200</span></div>
+      <div class="serial-item"><span class="serial-label">数据位</span><span class="serial-value">8 bit</span></div>
+      <div class="serial-item"><span class="serial-label">停止位</span><span class="serial-value">1 bit</span></div>
+      <div class="serial-item"><span class="serial-label">校验 / 流控</span><span class="serial-value">无</span></div>
+    </div>
+
+    <h3>默认上电状态</h3>
+    <table>
+      <thead><tr><th>项目</th><th>默认值</th></tr></thead>
+      <tbody>
+        <tr><td>工作通道</td><td>TXA 开启，TXB 关闭</td></tr>
+        <tr><td>输出频率</td><td>2400 MHz</td></tr>
+        <tr><td>输出功率码</td><td>15</td></tr>
+        <tr><td>参考时钟</td><td>50 MHz</td></tr>
+      </tbody>
+    </table>
+
+    <div class="quick-box">
+      <div class="quick-title">推荐：一条指令完成通道、频率和功率配置</div>
+      <pre>TX &lt;A|B&gt; &lt;频率&gt; &lt;功率码&gt;</pre>
+      <p>执行后仅开启指定通道，另一通道自动关闭。</p>
+    </div>
+
+    <h3>快速配置示例</h3>
+    <table>
+      <thead><tr><th>发送内容</th><th>执行结果</th></tr></thead>
+      <tbody>
+        <tr><td><code>TX A 2.45GHZ 20</code></td><td>TXA 输出 2.45 GHz，功率码 20；TXB 关闭。</td></tr>
+        <tr><td><code>TX B 915MHZ 15</code></td><td>TXB 输出 915 MHz，功率码 15；TXA 关闭。</td></tr>
+        <tr><td><code>TX A 2400 31</code></td><td>未写单位时按 MHz 处理，即 TXA 输出 2400 MHz。</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note"><strong>功率说明：</strong>功率码并非固定的 dBm。实际输出功率会随频率、匹配网络和负载条件变化。合法功率码为 0～31 或 48～63。</div>
+
+    <footer class="page-footer"><span>General Test · 客户使用文档</span><span>第 <span class="page-no" data-page="2"></span> 页</span></footer>
+  </section>
+
+  <section class="page compact">
+    <header class="page-header">
+      <img src="公司logo.png" alt="General Test">
+      <span class="doc-id">LMX2592 串口指令手册 · V1.4</span>
+    </header>
+
+    <h2><span class="section-number">02</span>指令说明</h2>
+
+    <h3>频率与参考时钟</h3>
+    <table>
+      <thead><tr><th>指令格式</th><th>功能说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>FREQ &lt;频率&gt;</code></td><td>设置输出频率，范围 20 MHz～9.8 GHz。支持 HZ、KHZ、MHZ、GHZ；未写单位时按 MHz 处理。</td></tr>
+        <tr><td><code>REF &lt;频率&gt;</code></td><td>设置参考时钟，范围 5～200 MHz。板载默认 50 MHz，正常使用无需修改。</td></tr>
+      </tbody>
+    </table>
+    <p><strong>示例：</strong> <code>FREQ 2.4GHZ</code>　<code>FREQ 915MHZ</code>　<code>REF 50MHZ</code></p>
+
+    <h3>输出通道与功率</h3>
+    <table>
+      <thead><tr><th>指令格式</th><th>功能说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>TX &lt;A|B&gt; &lt;频率&gt; &lt;功率码&gt;</code></td><td>推荐指令。一条指令完成通道选择、频率和功率配置。</td></tr>
+        <tr><td><code>OUT &lt;A|B|ALL&gt; ON|OFF</code></td><td>单独开启或关闭 A、B 或全部输出通道。</td></tr>
+        <tr><td><code>POWER &lt;A|B&gt; &lt;功率码&gt;</code></td><td>单独修改指定通道功率码，范围 0～31 或 48～63。</td></tr>
+        <tr><td><code>CE ON|OFF</code></td><td>开启或关闭整个 LMX2592 芯片。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>状态查询与维护</h3>
+    <table>
+      <thead><tr><th>指令</th><th>功能说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>STATUS</code></td><td>查看频率、参考时钟、锁定状态、通道状态和功率码。</td></tr>
+        <tr><td><code>VERSION</code></td><td>查看当前固件版本。</td></tr>
+        <tr><td><code>HELP</code></td><td>显示设备支持的指令列表。</td></tr>
+        <tr><td><code>INIT</code></td><td>重新初始化 LMX2592，仅在配置异常时使用。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>状态查询示例</h3>
+    <div class="status-box"><pre>&gt; STATUS
+FREQ=2450.000000 MHz REF=50.000000 MHz LOCK=YES CE=ON
+OUTA=ON POWER=20 OUTB=OFF POWER=15</pre></div>
+    <ul>
+      <li><code>LOCK=YES</code>：频率已锁定。</li>
+      <li><code>LOCK=NO</code>：尚未锁定，请检查参考时钟及频率设置。</li>
+    </ul>
+
+    <footer class="page-footer"><span>General Test · 客户使用文档</span><span>第 <span class="page-no" data-page="3"></span> 页</span></footer>
+  </section>
+
+  <section class="page compact">
+    <header class="page-header">
+      <img src="公司logo.png" alt="General Test">
+      <span class="doc-id">LMX2592 串口指令手册 · V1.4</span>
+    </header>
+    <h2><span class="section-number">03</span>面板按键设置</h2>
+    <p class="lead">设备无需连接电脑即可通过 LCD 面板设置输出频率、调节步进、选择通道和修改功率代码。</p>
+    <table>
+      <thead><tr><th>按键</th><th>功能</th></tr></thead>
+      <tbody>
+        <tr><td><code>KEY1</code></td><td>确认并应用当前设置；选择 OUT 且没有待应用修改时，用于开关所选通道。</td></tr>
+        <tr><td><code>KEY2 / KEY3</code></td><td>向右或向左选择 FREQ、STEP、OUT、POWER 设置项。</td></tr>
+        <tr><td><code>KEY5 / KEY4</code></td><td>增加或减少当前数值；长按可连续调节。</td></tr>
+      </tbody>
+    </table>
+    <h3>设置频率示例</h3>
+    <ol>
+      <li>使用 KEY2 或 KEY3，将选择标记移动到 <code>STEP</code>，再用 KEY4/KEY5 选择步进。</li>
+      <li>移动到 <code>FREQ</code>，使用 KEY4/KEY5 调整目标频率。</li>
+      <li>如需修改通道或功率，移动到 <code>OUT</code> 或 <code>POWER</code> 后进行调整。</li>
+      <li>LCD 显示 <code>EDIT K1 APPLY</code> 时按 KEY1，配置立即生效。</li>
+    </ol>
+    <div class="note"><strong>提示：</strong>频率范围为 20 MHz～9.8 GHz；步进支持 1 kHz～100 MHz。功率为 LMX2592 原始功率代码，并非固定 dBm。</div>
+    <footer class="page-footer"><span>General Test · 客户使用文档</span><span>第 <span class="page-no" data-page="4"></span> 页</span></footer>
+  </section>
+</body>
+</html>
