@@ -25,25 +25,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  10 .ARM.attributes 0000002e  00000000  00000000  00032098  2**0
                   CONTENTS, READONLY
- 11 .debug_info   0004cfba  00000000  00000000  000320c6  2**0
+ 11 .debug_info   0004cfb7  00000000  00000000  000320c6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 12 .debug_abbrev 0000b3b5  00000000  00000000  0007f080  2**0
+ 12 .debug_abbrev 0000b3a4  00000000  00000000  0007f07d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_aranges 000032f8  00000000  00000000  0008a438  2**3
+ 13 .debug_aranges 000032f8  00000000  00000000  0008a428  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_rnglists 0000289b  00000000  00000000  0008d730  2**0
+ 14 .debug_rnglists 0000289b  00000000  00000000  0008d720  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_macro  0004f435  00000000  00000000  0008ffcb  2**0
+ 15 .debug_macro  0004f435  00000000  00000000  0008ffbb  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_line   00048c73  00000000  00000000  000df400  2**0
+ 16 .debug_line   00048c71  00000000  00000000  000df3f0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_str    001932d3  00000000  00000000  00128073  2**0
+ 17 .debug_str    001932d7  00000000  00000000  00128061  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .comment      00000045  00000000  00000000  002bb346  2**0
+ 18 .comment      00000045  00000000  00000000  002bb338  2**0
                   CONTENTS, READONLY
- 19 .debug_frame  0000e0e0  00000000  00000000  002bb38c  2**2
+ 19 .debug_frame  0000e0e0  00000000  00000000  002bb380  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 20 .debug_line_str 00000218  00000000  00000000  002c946c  2**0
+ 20 .debug_line_str 00000218  00000000  00000000  002c9460  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -996,18 +996,15 @@ static void XC001_DebugAttachWindow(void)
 {
  8020900:	b580      	push	{r7, lr}
  8020902:	af00      	add	r7, sp, #0
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  HAL_DBGMCU_DisableDBGSleepMode();
-  HAL_DBGMCU_DisableDBGStopMode();
-  HAL_DBGMCU_DisableDBGStandbyMode();
-#else
+#if defined(__HAL_RCC_DBGMCU_CLK_ENABLE)
+  __HAL_RCC_DBGMCU_CLK_ENABLE();
+#endif
   HAL_DBGMCU_EnableDBGSleepMode();
  8020904:	f009 f8ac 	bl	8029a60 <HAL_DBGMCU_EnableDBGSleepMode>
   HAL_DBGMCU_EnableDBGStopMode();
  8020908:	f009 f8b8 	bl	8029a7c <HAL_DBGMCU_EnableDBGStopMode>
   HAL_DBGMCU_EnableDBGStandbyMode();
  802090c:	f009 f8c4 	bl	8029a98 <HAL_DBGMCU_EnableDBGStandbyMode>
-#endif
 #if defined(__HAL_DBGMCU_FREEZE_IWDG1)
   __HAL_DBGMCU_FREEZE_IWDG1();
  8020910:	4b06      	ldr	r3, [pc, #24]	@ (802092c <XC001_DebugAttachWindow+0x2c>)
@@ -1350,11 +1347,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
  8020ac0:	f000 f8ae 	bl	8020c20 <Error_Handler>
+  }
+
   /** Configure the main internal regulator output voltage
   */
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-#else
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
  8020ac4:	2300      	movs	r3, #0
  8020ac6:	603b      	str	r3, [r7, #0]
@@ -1377,7 +1373,6 @@ void SystemClock_Config(void)
  8020aee:	f003 0301 	and.w	r3, r3, #1
  8020af2:	603b      	str	r3, [r7, #0]
  8020af4:	683b      	ldr	r3, [r7, #0]
-#endif
 
   if (XC001_WaitForVoltageReady(100U) == 0U)
  8020af6:	2064      	movs	r0, #100	@ 0x64
@@ -1451,17 +1446,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
  8020b50:	2303      	movs	r3, #3
  8020b52:	60bb      	str	r3, [r7, #8]
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV2;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
-#else
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
  8020b54:	2300      	movs	r3, #0
  8020b56:	60fb      	str	r3, [r7, #12]
   RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV4;
  8020b58:	2309      	movs	r3, #9
  8020b5a:	613b      	str	r3, [r7, #16]
-#endif
   RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
  8020b5c:	2300      	movs	r3, #0
  8020b5e:	617b      	str	r3, [r7, #20]
@@ -1475,9 +1465,6 @@ void SystemClock_Config(void)
  8020b68:	2300      	movs	r3, #0
  8020b6a:	623b      	str	r3, [r7, #32]
 
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-#else
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
  8020b6c:	1d3b      	adds	r3, r7, #4
  8020b6e:	2101      	movs	r1, #1
@@ -1486,7 +1473,6 @@ void SystemClock_Config(void)
  8020b76:	4603      	mov	r3, r0
  8020b78:	2b00      	cmp	r3, #0
  8020b7a:	d001      	beq.n	8020b80 <SystemClock_Config+0xec>
-#endif
   {
     Error_Handler();
  8020b7c:	f000 f850 	bl	8020c20 <Error_Handler>
@@ -16899,7 +16885,7 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
  8027480:	6800      	ldr	r0, [r0, #0]
  8027482:	f020 fca7 	bl	8047dd4 <sniprintf>
  8027486:	f000 bf8a 	b.w	802839e <XC001_SCPI_Execute+0x1362>
-             (XC001_LOW_POWER_PROFILE != 0U) ? "LOW_POWER" : "PERFORMANCE");
+             "PERFORMANCE");
   }
   else if (XC001_StrCaseCmp(cmd, "STAT?") == 0)
  802748a:	499b      	ldr	r1, [pc, #620]	@ (80276f8 <XC001_SCPI_Execute+0x6bc>)

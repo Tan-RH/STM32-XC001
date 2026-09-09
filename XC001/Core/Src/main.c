@@ -70,15 +70,9 @@ static void XC001_DebugAttachWindow(void)
 #if defined(__HAL_RCC_DBGMCU_CLK_ENABLE)
   __HAL_RCC_DBGMCU_CLK_ENABLE();
 #endif
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  HAL_DBGMCU_DisableDBGSleepMode();
-  HAL_DBGMCU_DisableDBGStopMode();
-  HAL_DBGMCU_DisableDBGStandbyMode();
-#else
   HAL_DBGMCU_EnableDBGSleepMode();
   HAL_DBGMCU_EnableDBGStopMode();
   HAL_DBGMCU_EnableDBGStandbyMode();
-#endif
 #if defined(__HAL_DBGMCU_FREEZE_IWDG1)
   __HAL_DBGMCU_FREEZE_IWDG1();
 #endif
@@ -194,11 +188,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-#else
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
-#endif
 
   if (XC001_WaitForVoltageReady(100U) == 0U)
   {
@@ -231,23 +221,14 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV2;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
-#else
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV4;
-#endif
   RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
 
-#if (XC001_LOW_POWER_PROFILE != 0U)
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-#else
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-#endif
   {
     Error_Handler();
   }

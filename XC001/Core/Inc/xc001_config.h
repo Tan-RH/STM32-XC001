@@ -4,13 +4,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define XC001_SOFTWARE_VERSION   "V1.3.7"
+#define XC001_SOFTWARE_VERSION   "V1.3.8"
 #define XC001_DEVICE_ID          "XC001,CONTROL-BOARD,H743," XC001_SOFTWARE_VERSION
 
-/* Keep the known-good CubeMX clock startup until the board power rail and
- * voltage-scaling behavior have been validated on hardware. Idle WFI remains
- * enabled in FreeRTOS for the low-power benefit without changing boot clocks. */
-#define XC001_LOW_POWER_PROFILE  0U
+/* The STM32H743 always starts and runs at the validated 480 MHz performance
+ * clock configuration. Do not add runtime CPU clock scaling here: Ethernet,
+ * UART timing and the boot path rely on this fixed configuration. */
+#define XC001_CPU_CLOCK_HZ        480000000UL
 #define XC001_DEFAULT_IP0        192U
 #define XC001_DEFAULT_IP1        168U
 #define XC001_DEFAULT_IP2        1U

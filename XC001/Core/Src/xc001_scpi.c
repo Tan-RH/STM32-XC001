@@ -298,7 +298,7 @@ void XC001_SCPI_Execute(const char *command, char *reply, size_t reply_size)
              (unsigned long)HAL_RCC_GetHCLKFreq(),
              (unsigned long)HAL_RCC_GetPCLK1Freq(),
              (unsigned long)HAL_RCC_GetPCLK2Freq(),
-             (XC001_LOW_POWER_PROFILE != 0U) ? "LOW_POWER" : "PERFORMANCE");
+             "PERFORMANCE");
   }
   else if (XC001_StrCaseCmp(cmd, "STAT?") == 0)
   {
