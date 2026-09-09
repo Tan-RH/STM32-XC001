@@ -146,6 +146,15 @@ void ControlPanel_Process(void)
   if (!power_dirty) edit_power = LMX2592_GetPower(edit_output);
 }
 
+void ControlPanel_SyncFromDevice(LMX2592_Output preferred_output, bool select_output)
+{
+  if (select_output && preferred_output <= LMX2592_OUTPUT_B) edit_output = preferred_output;
+  edit_frequency = LMX2592_GetFrequency();
+  edit_power = LMX2592_GetPower(edit_output);
+  frequency_dirty = false;
+  power_dirty = false;
+}
+
 ControlPanel_Field ControlPanel_GetField(void) { return field; }
 uint64_t ControlPanel_GetFrequency(void) { return edit_frequency; }
 uint32_t ControlPanel_GetStep(void) { return steps[step_index]; }

@@ -4,12 +4,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define XC001_SOFTWARE_VERSION   "V1.3.6"
+#define XC001_SOFTWARE_VERSION   "V1.3.7"
 #define XC001_DEVICE_ID          "XC001,CONTROL-BOARD,H743," XC001_SOFTWARE_VERSION
 
-/* 240 MHz core / 120 MHz peripheral buses. This substantially reduces the
- * idle power while preserving Ethernet, FDCAN and UART peripheral clocks. */
-#define XC001_LOW_POWER_PROFILE  1U
+/* Keep the known-good CubeMX clock startup until the board power rail and
+ * voltage-scaling behavior have been validated on hardware. Idle WFI remains
+ * enabled in FreeRTOS for the low-power benefit without changing boot clocks. */
+#define XC001_LOW_POWER_PROFILE  0U
 #define XC001_DEFAULT_IP0        192U
 #define XC001_DEFAULT_IP1        168U
 #define XC001_DEFAULT_IP2        1U
@@ -24,7 +25,7 @@
 #define XC001_DEFAULT_MASK3      0U
 #define XC001_DEFAULT_UDP_PORT   4000U
 #define XC001_HTTP_PORT          80U
-#define XC001_STATUS_BLINK_MS    250U
+#define XC001_STATUS_BLINK_MS    500U
 #define XC001_COMMAND_ERROR_MS   2000U
 #define XC001_NET_SERVICES_AUTOSTART 1U
 

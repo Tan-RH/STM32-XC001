@@ -16,6 +16,7 @@ typedef enum
 
 void ControlPanel_Init(void);
 void ControlPanel_Process(void);
+void ControlPanel_SyncFromDevice(LMX2592_Output preferred_output, bool select_output);
 ControlPanel_Field ControlPanel_GetField(void);
 uint64_t ControlPanel_GetFrequency(void);
 uint32_t ControlPanel_GetStep(void);

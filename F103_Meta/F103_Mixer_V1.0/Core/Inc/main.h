@@ -57,15 +57,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LMX2592_MUX_Pin GPIO_PIN_1
+/* Final board wiring confirmed against the supplier firmware. */
+#define LMX2592_MUX_Pin GPIO_PIN_7
 #define LMX2592_MUX_GPIO_Port GPIOA
-#define LMX2592_DATA_Pin GPIO_PIN_2
+#define LMX2592_DATA_Pin GPIO_PIN_3
 #define LMX2592_DATA_GPIO_Port GPIOA
-#define LMX2592_CLK_Pin GPIO_PIN_3
+#define LMX2592_CLK_Pin GPIO_PIN_6
 #define LMX2592_CLK_GPIO_Port GPIOA
-#define LMX2592_LE_Pin GPIO_PIN_6
+#define LMX2592_LE_Pin GPIO_PIN_2
 #define LMX2592_LE_GPIO_Port GPIOA
-#define LMX2592_CE_Pin GPIO_PIN_7
+#define LMX2592_CE_Pin GPIO_PIN_1
 #define LMX2592_CE_GPIO_Port GPIOA
 #define LED_BLUE_Pin GPIO_PIN_8
 #define LED_BLUE_GPIO_Port GPIOC

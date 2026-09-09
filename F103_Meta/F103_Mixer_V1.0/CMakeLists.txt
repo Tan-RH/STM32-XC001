@@ -20,6 +20,8 @@ endif()
 
 # Set the project name
 set(CMAKE_PROJECT_NAME F103_Mixer_V1.0)
+set(FIRMWARE_VERSION "V1.6.0" CACHE STRING "Firmware release version")
+set(FIRMWARE_OUTPUT_NAME "${CMAKE_PROJECT_NAME}-${FIRMWARE_VERSION}")
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -71,9 +73,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O ihex
             $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
-            $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/${CMAKE_PROJECT_NAME}.hex
+            $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/${FIRMWARE_OUTPUT_NAME}.hex
     COMMAND ${CMAKE_OBJCOPY} -O binary
             $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
-            $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/${CMAKE_PROJECT_NAME}.bin
+            $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/${FIRMWARE_OUTPUT_NAME}.bin
     COMMENT "Generating HEX and BIN firmware images"
 )

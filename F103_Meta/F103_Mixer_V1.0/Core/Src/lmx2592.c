@@ -11,33 +11,41 @@ typedef struct
 {
   uint16_t divide;
   uint8_t seg1;
+  uint8_t seg1_en;
   uint8_t seg2;
+  uint8_t seg2_en;
   uint8_t seg3;
+  uint8_t seg3_en;
+  uint8_t seg_sel;
 } ChannelDivider;
 
 static const ChannelDivider channel_dividers[] = {
-  {2, 2, 1, 1}, {3, 3, 1, 1}, {4, 2, 2, 1}, {6, 3, 2, 1},
-  {8, 2, 4, 1}, {12, 3, 4, 1}, {16, 2, 8, 1}, {24, 3, 8, 1},
-  {32, 2, 8, 2}, {36, 3, 6, 2}, {48, 3, 8, 2}, {64, 2, 8, 4},
-  {96, 2, 8, 6}, {128, 2, 8, 8}, {192, 3, 8, 8}
+  {2, 0, 1, 0, 0, 0, 0, 1}, {3, 1, 1, 0, 0, 0, 0, 1},
+  {4, 0, 1, 1, 1, 0, 0, 2}, {6, 1, 1, 1, 1, 0, 0, 2},
+  {8, 0, 1, 2, 1, 0, 0, 2}, {12, 1, 1, 2, 1, 0, 0, 2},
+  {16, 0, 1, 8, 1, 0, 0, 2}, {24, 1, 1, 8, 1, 0, 0, 2},
+  {32, 0, 1, 8, 1, 1, 1, 4}, {36, 1, 1, 4, 1, 1, 1, 4},
+  {48, 1, 1, 8, 1, 1, 1, 4}, {64, 0, 1, 8, 1, 2, 1, 4},
+  {96, 0, 1, 8, 1, 4, 1, 4}, {128, 0, 1, 8, 1, 8, 1, 4},
+  {192, 1, 1, 8, 1, 8, 1, 4}
 };
 
-/* Register-map reset values from LMX2592 data sheet, Figure 22. */
+/* Board-validated baseline from the supplier's CREDIT-LMX2592 firmware. */
 static const struct
 {
   uint8_t address;
   uint16_t value;
 } register_defaults[] = {
-  {64, 0x007F}, {62, 0x0000}, {61, 0x0001}, {59, 0x0000},
-  {48, 0x03FC}, {47, 0x00C0}, {46, 0x0FA3}, {45, 0x0000},
+  {64, 0x037F}, {62, 0x0000}, {61, 0x0001}, {59, 0x0000},
+  {48, 0x03FD}, {47, 0x00C0}, {46, 0x0000}, {45, 0x0000},
   {44, 0x0000}, {43, 0x0000}, {42, 0x0000}, {41, 0x03E8},
-  {40, 0x0000}, {39, 0x8204}, {38, 0x0036}, {37, 0x4000},
-  {36, 0x0411}, {35, 0x021D}, {34, 0xC3EA}, {33, 0x2A0A},
+  {40, 0x0000}, {39, 0x8104}, {38, 0x0000}, {37, 0x4000},
+  {36, 0x0000}, {35, 0x0019}, {34, 0xC3CA}, {33, 0x2A0A},
   {32, 0x210A}, {31, 0x0401}, {30, 0x0034}, {29, 0x0084},
-  {28, 0x2924}, {25, 0x0000}, {24, 0x0529}, {23, 0x8842},
-  {22, 0x4600}, {20, 0x012C}, {19, 0x0965}, {14, 0x018D},
-  {13, 0x4000}, {12, 0x7001}, {11, 0x0018}, {10, 0x00D8},
-  {9, 0x0202}, {8, 0x1084}, {7, 0x2852}, {4, 0x1943},
+  {28, 0x2924}, {25, 0x0000}, {24, 0x0509}, {23, 0x8B42},
+  {22, 0x2300}, {20, 0x012C}, {19, 0x0AF5}, {14, 0x018F},
+  {13, 0x4000}, {12, 0x7001}, {11, 0x0018}, {10, 0x10D8},
+  {9, 0x0302}, {8, 0x1084}, {7, 0x28B2}, {4, 0x0543},
   {2, 0x0500}, {1, 0x080B}
 };
 
@@ -78,18 +86,6 @@ static bool is_power_valid(uint8_t power_code)
   return (power_code <= 31U) || ((power_code >= 48U) && (power_code <= 63U));
 }
 
-static uint8_t segment_code(uint8_t divide)
-{
-  switch (divide)
-  {
-    case 2: return 1U;
-    case 4: return 2U;
-    case 6: return 4U;
-    case 8: return 8U;
-    default: return 0U;
-  }
-}
-
 void LMX2592_WriteRegister(uint8_t address, uint16_t data)
 {
   uint32_t frame;
@@ -101,6 +97,8 @@ void LMX2592_WriteRegister(uint8_t address, uint16_t data)
 
   frame = ((uint32_t)address << 16) | data;
   HAL_GPIO_WritePin(LMX2592_LE_GPIO_Port, LMX2592_LE_Pin, GPIO_PIN_RESET);
+  /* Match the supplier waveform: SCK idles high between frames. */
+  HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_SET);
   for (int bit = 23; bit >= 0; --bit)
   {
     HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_RESET);
@@ -110,21 +108,22 @@ void LMX2592_WriteRegister(uint8_t address, uint16_t data)
     HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_SET);
     short_delay();
   }
-  HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(LMX2592_LE_GPIO_Port, LMX2592_LE_Pin, GPIO_PIN_SET);
   short_delay();
-  HAL_GPIO_WritePin(LMX2592_LE_GPIO_Port, LMX2592_LE_Pin, GPIO_PIN_RESET);
   registers[address] = data;
 }
 
-static void update_outputs(bool divider_used)
+/* Update the output-related shadow registers without touching the device. */
+static void update_output_registers(bool divider_used)
 {
   uint16_t r31 = registers[31] & (uint16_t)~((1U << 10) | (1U << 9) | (1U << 7));
   uint16_t r34 = registers[34] & (uint16_t)~(1U << 5);
   uint16_t r36 = registers[36] & (uint16_t)~((1U << 11) | (1U << 10));
   uint16_t r46 = registers[46] & (uint16_t)~((0x3FU << 8) | (1U << 7) | (1U << 6));
   uint16_t r47 = registers[47] & (uint16_t)~((0x3U << 11) | 0x3FU);
-  uint16_t r48 = registers[48] & (uint16_t)~0x3U;
+  /* OUTB_MUX=1 is the supplier board's fixed output routing. */
+  uint16_t r48 = registers[48] | 1U;
 
   r46 |= (uint16_t)output_power[0] << 8;
   r47 |= output_power[1];
@@ -144,15 +143,26 @@ static void update_outputs(bool divider_used)
     if (!output_enabled[0]) r31 |= 1U << 9;
     if (!output_enabled[1]) r31 |= 1U << 10;
     r47 |= 1U << 11;
-    r48 |= 1U;
   }
 
-  LMX2592_WriteRegister(31U, r31);
-  LMX2592_WriteRegister(34U, r34);
-  LMX2592_WriteRegister(36U, r36);
-  LMX2592_WriteRegister(46U, r46);
-  LMX2592_WriteRegister(47U, r47);
-  LMX2592_WriteRegister(48U, r48);
+  registers[48] = r48;
+  registers[47] = r47;
+  registers[46] = r46;
+  registers[36] = r36;
+  registers[34] = r34;
+  registers[31] = r31;
+}
+
+static void commit_output_registers(bool include_r48)
+{
+  /* The supplier updates output controls before the synthesizer block. */
+  if (include_r48) LMX2592_WriteRegister(48U, registers[48]);
+  LMX2592_WriteRegister(47U, registers[47]);
+  LMX2592_WriteRegister(46U, registers[46]);
+  LMX2592_WriteRegister(36U, registers[36]);
+  LMX2592_WriteRegister(34U, registers[34]);
+  LMX2592_WriteRegister(31U, registers[31]);
+  if (registers[0] != 0U) LMX2592_WriteRegister(0U, registers[0] | (1U << 3));
 }
 
 LMX2592_Status LMX2592_SetFrequency(uint64_t requested_hz)
@@ -164,6 +174,8 @@ LMX2592_Status LMX2592_SetFrequency(uint64_t requested_hz)
   uint32_t numerator;
   uint32_t denominator;
   uint32_t common;
+  uint8_t mash_order;
+  uint8_t pfd_delay;
   bool doubler = false;
 
   if (!is_frequency_valid(requested_hz))
@@ -210,54 +222,94 @@ LMX2592_Status LMX2592_SetFrequency(uint64_t requested_hz)
     denominator = 1U;
   }
 
-  LMX2592_WriteRegister(30U, (registers[30] & (uint16_t)~1U) | (doubler ? 1U : 0U));
-  LMX2592_WriteRegister(35U, divider == NULL ? registers[35] :
-    (uint16_t)((registers[35] & 0xE078U) |
-      ((uint16_t)segment_code(divider->seg2) << 9) |
-      ((divider->seg3 != 1U) ? (1U << 8) : 0U) |
-      ((divider->seg2 != 1U) ? (1U << 7) : 0U) |
-      ((divider->seg1 == 3U) ? (1U << 2) : 0U) |
-      (1U << 1) | 1U));
+  registers[30] = (registers[30] & (uint16_t)~1U) | (doubler ? 1U : 0U);
+  registers[37] = (registers[37] & (uint16_t)~(1U << 12)) |
+                  (doubler ? (1U << 12) : 0U);
+  registers[35] = divider == NULL ? 0x0019U :
+    (uint16_t)(0x0019U |
+      ((uint16_t)divider->seg2 << 9) |
+      ((uint16_t)divider->seg3_en << 8) |
+      ((uint16_t)divider->seg2_en << 7) |
+      ((uint16_t)divider->seg1 << 2) |
+      ((uint16_t)divider->seg1_en << 1));
   if (divider != NULL)
   {
-    uint8_t select = (divider->seg3 != 1U) ? 4U : ((divider->seg2 != 1U) ? 2U : 1U);
     uint16_t r36 = registers[36] & (uint16_t)~((0x7U << 4) | 0xFU);
-    r36 |= (uint16_t)select << 4;
-    r36 |= segment_code(divider->seg3);
-    LMX2592_WriteRegister(36U, r36);
+    r36 |= (uint16_t)divider->seg_sel << 4;
+    r36 |= divider->seg3;
+    registers[36] = r36;
+  }
+  else
+  {
+    /* Clear stale divider fields when moving back to the direct VCO path. */
+    registers[36] = 0x0000U;
   }
 
-  LMX2592_WriteRegister(38U, (registers[38] & 0xE001U) | (uint16_t)(n_integer << 1));
-  LMX2592_WriteRegister(40U, (uint16_t)(denominator >> 16));
-  LMX2592_WriteRegister(41U, (uint16_t)denominator);
-  LMX2592_WriteRegister(44U, (uint16_t)(numerator >> 16));
-  LMX2592_WriteRegister(45U, (uint16_t)numerator);
+  registers[38] = (registers[38] & 0xE001U) | (uint16_t)(n_integer << 1);
+  registers[40] = (uint16_t)(denominator >> 16);
+  registers[41] = (uint16_t)denominator;
+  registers[44] = (uint16_t)(numerator >> 16);
+  registers[45] = (uint16_t)numerator;
 
   if (numerator == 0U)
-    LMX2592_WriteRegister(46U, registers[46] & (uint16_t)~((1U << 5) | 0x7U));
+  {
+    mash_order = 0U;
+    pfd_delay = 1U;
+  }
+  else if (n_integer < 16U)
+  {
+    mash_order = 1U;
+    pfd_delay = 1U;
+  }
+  else if (n_integer < 18U)
+  {
+    mash_order = 2U;
+    pfd_delay = 2U;
+  }
+  else if (n_integer < 30U)
+  {
+    mash_order = 3U;
+    pfd_delay = 2U;
+  }
   else
-    LMX2592_WriteRegister(46U, (registers[46] & (uint16_t)~0x7U) | (1U << 5) | 3U);
+  {
+    mash_order = 4U;
+    pfd_delay = 8U;
+  }
+  registers[39] = (registers[39] & (uint16_t)~0x0F00U) |
+                   ((uint16_t)pfd_delay << 8);
+  registers[46] = (registers[46] & (uint16_t)~((1U << 5) | 0x7U)) |
+                  (numerator != 0U ? (1U << 5) : 0U) | mash_order;
 
-  update_outputs(divider != NULL);
+  update_output_registers(divider != NULL);
   frequency_hz = requested_hz;
+
+  /* LMX2592 calibration is sensitive to programming order.  The supplier
+     writes the synthesizer block from R47 down to R30 and commits with R0. */
+  for (int address = 47; address >= 30; --address)
+  {
+    LMX2592_WriteRegister((uint8_t)address, registers[address]);
+  }
   LMX2592_WriteRegister(0U, registers[0] | (1U << 3));
   return LMX2592_OK;
 }
 
 void LMX2592_Init(void)
 {
-  HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LMX2592_DATA_GPIO_Port, LMX2592_DATA_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LMX2592_LE_GPIO_Port, LMX2592_LE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LMX2592_CLK_GPIO_Port, LMX2592_CLK_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LMX2592_DATA_GPIO_Port, LMX2592_DATA_Pin, GPIO_PIN_SET);
+  /* CSB/LE is active low; leave it high between serial frames. */
+  HAL_GPIO_WritePin(LMX2592_LE_GPIO_Port, LMX2592_LE_Pin, GPIO_PIN_SET);
   LMX2592_SetChipEnabled(true);
   HAL_Delay(10U);
-  LMX2592_WriteRegister(0U, 0x0002U);
+  LMX2592_WriteRegister(0U, 0x231EU);
   HAL_Delay(1U);
+  LMX2592_WriteRegister(0U, 0x231CU);
   for (uint32_t i = 0; i < (sizeof(register_defaults) / sizeof(register_defaults[0])); ++i)
   {
     LMX2592_WriteRegister(register_defaults[i].address, register_defaults[i].value);
   }
-  LMX2592_WriteRegister(0U, 0x2014U);
+  LMX2592_WriteRegister(0U, 0x221CU);
   (void)LMX2592_SetFrequency(frequency_hz);
 }
 
@@ -279,7 +331,8 @@ LMX2592_Status LMX2592_SetPower(LMX2592_Output output, uint8_t power_code)
     return LMX2592_ERROR_ARGUMENT;
   }
   output_power[output] = power_code;
-  update_outputs(frequency_hz < UINT64_C(3550000000));
+  update_output_registers(frequency_hz < UINT64_C(3550000000));
+  commit_output_registers(false);
   return LMX2592_OK;
 }
 
@@ -298,14 +351,16 @@ LMX2592_Status LMX2592_ConfigureTx(LMX2592_Output output, uint64_t requested_hz,
 
   output_enabled[LMX2592_OUTPUT_A] = false;
   output_enabled[LMX2592_OUTPUT_B] = false;
-  update_outputs(frequency_hz < UINT64_C(3550000000));
+  update_output_registers(frequency_hz < UINT64_C(3550000000));
+  commit_output_registers(false);
 
   status = LMX2592_SetFrequency(requested_hz);
   if (status != LMX2592_OK) return status;
 
   output_power[output] = power_code;
   output_enabled[output] = true;
-  update_outputs(frequency_hz < UINT64_C(3550000000));
+  update_output_registers(frequency_hz < UINT64_C(3550000000));
+  commit_output_registers(false);
   return LMX2592_OK;
 }
 
@@ -314,8 +369,26 @@ void LMX2592_SetOutput(LMX2592_Output output, bool enabled)
   if (output <= LMX2592_OUTPUT_B)
   {
     output_enabled[output] = enabled;
-    update_outputs(frequency_hz < UINT64_C(3550000000));
+    update_output_registers(frequency_hz < UINT64_C(3550000000));
+    commit_output_registers(false);
   }
+}
+
+void LMX2592_ApplySupplierOutputProfile(void)
+{
+  uint16_t r46 = registers[46] & (uint16_t)~((0x3FU << 8) | (1U << 7) | (1U << 6));
+  uint16_t r47 = registers[47] & (uint16_t)~((0x3U << 11) | 0x3FU);
+
+  /* CREDIT-LMX2592-SW-3 uses OUTB_POW=63 and leaves OUTB_PD cleared. */
+  r46 |= (uint16_t)output_power[LMX2592_OUTPUT_A] << 8;
+  r47 |= 63U;
+  output_enabled[LMX2592_OUTPUT_A] = true;
+  output_enabled[LMX2592_OUTPUT_B] = true;
+  output_power[LMX2592_OUTPUT_B] = 63U;
+  registers[46] = r46;
+  registers[47] = r47;
+  registers[48] = 0x03FDU;
+  commit_output_registers(true);
 }
 
 void LMX2592_SetChipEnabled(bool enabled)
@@ -340,3 +413,7 @@ bool LMX2592_IsOutputEnabled(LMX2592_Output output) { return output_enabled[outp
 uint8_t LMX2592_GetPower(LMX2592_Output output) { return output_power[output]; }
 uint64_t LMX2592_GetFrequency(void) { return frequency_hz; }
 uint32_t LMX2592_GetReference(void) { return reference_hz; }
+uint16_t LMX2592_GetRegister(uint8_t address)
+{
+  return address <= 64U ? registers[address] : 0U;
+}

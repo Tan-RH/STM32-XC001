@@ -91,6 +91,20 @@ static void XC001_DebugAttachWindow(void)
 #endif
 }
 
+static uint8_t XC001_WaitForVoltageReady(uint32_t timeout_ms)
+{
+  uint32_t start = HAL_GetTick();
+
+  while (!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY))
+  {
+    if ((HAL_GetTick() - start) >= timeout_ms)
+    {
+      return 0U;
+    }
+  }
+  return 1U;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -173,7 +187,10 @@ void SystemClock_Config(void)
 
   /** Supply configuration update enable
   */
-  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
+  if (HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
   /** Configure the main internal regulator output voltage
   */
@@ -183,7 +200,10 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 #endif
 
-  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+  if (XC001_WaitForVoltageReady(100U) == 0U)
+  {
+    Error_Handler();
+  }
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.

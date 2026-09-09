@@ -72,8 +72,8 @@
       <div class="cover-subtitle">频率源与输出通道控制</div>
       <div class="cover-product">客户使用文档</div>
       <div class="cover-info">
-        <div class="cover-row"><span class="cover-label">适用固件</span><span class="cover-value">V1.4.0</span></div>
-        <div class="cover-row"><span class="cover-label">文档版本</span><span class="cover-value">V1.4</span></div>
+        <div class="cover-row"><span class="cover-label">适用固件</span><span class="cover-value">V1.6.0</span></div>
+        <div class="cover-row"><span class="cover-label">文档版本</span><span class="cover-value">V1.6.0</span></div>
         <div class="cover-row"><span class="cover-label">发布日期</span><span class="cover-value">2026-07-31</span></div>
       </div>
       <div class="cover-note">本手册用于说明设备串口连接、频率设置及输出控制方法。</div>
@@ -83,7 +83,7 @@
   <section class="page">
     <header class="page-header">
       <img src="公司logo.png" alt="General Test">
-      <span class="doc-id">LMX2592 串口指令手册 · V1.4</span>
+      <span class="doc-id">LMX2592 串口指令手册 · V1.6.0</span>
     </header>
 
     <h2><span class="section-number">01</span>连接与快速使用</h2>
@@ -96,6 +96,7 @@
       <div class="serial-item"><span class="serial-label">停止位</span><span class="serial-value">1 bit</span></div>
       <div class="serial-item"><span class="serial-label">校验 / 流控</span><span class="serial-value">无</span></div>
     </div>
+    <div class="note"><strong>LMX2592 引脚：</strong>CE=PA1，DATA=PA3，CLK=PA6，LE=PA2，MUXOUT=PA7。</div>
 
     <h3>默认上电状态</h3>
     <table>
@@ -132,7 +133,7 @@
   <section class="page compact">
     <header class="page-header">
       <img src="公司logo.png" alt="General Test">
-      <span class="doc-id">LMX2592 串口指令手册 · V1.4</span>
+      <span class="doc-id">LMX2592 串口指令手册 · V1.6.0</span>
     </header>
 
     <h2><span class="section-number">02</span>指令说明</h2>
@@ -155,6 +156,7 @@
         <tr><td><code>OUT &lt;A|B|ALL&gt; ON|OFF</code></td><td>单独开启或关闭 A、B 或全部输出通道。</td></tr>
         <tr><td><code>POWER &lt;A|B&gt; &lt;功率码&gt;</code></td><td>单独修改指定通道功率码，范围 0～31 或 48～63。</td></tr>
         <tr><td><code>CE ON|OFF</code></td><td>开启或关闭整个 LMX2592 芯片。</td></tr>
+        <tr><td><code>SUPPLIER</code></td><td>临时套用供应商双输出测试配置，便于与原始固件对比。</td></tr>
       </tbody>
     </table>
 
@@ -163,6 +165,8 @@
       <thead><tr><th>指令</th><th>功能说明</th></tr></thead>
       <tbody>
         <tr><td><code>STATUS</code></td><td>查看频率、参考时钟、锁定状态、通道状态和功率码。</td></tr>
+        <tr><td><code>PINS</code></td><td>输出 CE、MUXOUT、LE、CLK、DATA 实时引脚电平，用于现场排查。</td></tr>
+        <tr><td><code>REGS</code></td><td>输出关键 LMX2592 寄存器影子值，用于确认配置是否已发送。</td></tr>
         <tr><td><code>VERSION</code></td><td>查看当前固件版本。</td></tr>
         <tr><td><code>HELP</code></td><td>显示设备支持的指令列表。</td></tr>
         <tr><td><code>INIT</code></td><td>重新初始化 LMX2592，仅在配置异常时使用。</td></tr>
@@ -184,7 +188,7 @@ OUTA=ON POWER=20 OUTB=OFF POWER=15</pre></div>
   <section class="page compact">
     <header class="page-header">
       <img src="公司logo.png" alt="General Test">
-      <span class="doc-id">LMX2592 串口指令手册 · V1.4</span>
+      <span class="doc-id">LMX2592 串口指令手册 · V1.6.0</span>
     </header>
     <h2><span class="section-number">03</span>面板按键设置</h2>
     <p class="lead">设备无需连接电脑即可通过 LCD 面板设置输出频率、调节步进、选择通道和修改功率代码。</p>

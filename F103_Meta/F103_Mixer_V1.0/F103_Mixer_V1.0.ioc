@@ -56,6 +56,7 @@ NVIC.PriorityGroup=NVIC_PRIORITYGROUP_4
 NVIC.SVCall_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.SysTick_IRQn=true\:15\:0\:false\:false\:true\:false\:true\:false
 NVIC.UsageFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
+NVIC.USART1_IRQn=true\:5\:0\:true\:false\:true\:true\:true\:true
 PA1.GPIOParameters=GPIO_Label
 PA1.GPIO_Label=LMX2592-MUX
 PA1.Locked=true
